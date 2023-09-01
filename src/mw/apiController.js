@@ -24,8 +24,6 @@ function APIController(server) {
     waitingJobs++;
     var reqToCP, resultCP;
     var cwjy = { action: "EVSECheck", userId: req.body.user, evseNickname: req.body.evse};
-    //console.log(JSON.stringify(cwjy));
-    //console.log(req.body);
     console.log('req.body: ' + JSON.stringify(req.body));
     var resultDB = await connDBServer.sendAndReceive(cwjy);
     if(!resultDB || !req.body.user) {
@@ -44,7 +42,6 @@ function APIController(server) {
 
       reqToCP = { messageType: 2, uuid: uuidv1(), action: 'RemoteStartTransaction', pdu: { idTag: req.body.user , connectorId: 1} };
       resultCP = await connCP.sendAndReceive(evseSerial, reqToCP);
-      //console.log('after resolve start charge evse result: ' + JSON.stringify(resultCP));
       if (!resultCP) {
         console.log('timeout timeout');
         response.responseCode = { type: 'error', name: 'temporarily unavailable' };
@@ -55,6 +52,7 @@ function APIController(server) {
       }
       if (resultCP.pdu.status == 'Accepted') {
         console.log('hscanAction: EVSE says OK to charge');
+        // for instant action
         //cwjy = { action: "StatusNotification", userId: req.body.user, evseSerial: evseSerial, pdu: { status: 'Preparing' } };
         //resultDB = await connDBServer.sendAndReceive(cwjy);
         response.responseCode = { type: 'page', name: 'charging status' };
@@ -76,7 +74,7 @@ function APIController(server) {
     else if (resultDB[0].status == 'Finishing' && resultDB[0].occupyingUserId != req.body.user) {
       console.log('scan >> Angry');
       response.responseCode = { type: 'popup', name: 'ask angry' };
-      /*
+      /*for instant action
       cwjy = { action: 'Angry', userId: req.body.user, evseSerial: req.body.evse };
       result = await connDBServer.sendAndReceive(cwjy);
       console.log('angry: ' + result);
@@ -89,7 +87,7 @@ function APIController(server) {
     else if (resultDB[0].status == 'Charging' && resultDB[0].occupyingUserId == req.body.user) {
       console.log('scan >> cancel');
       response.responseCode = { type: 'popup', name: 'ask cancel' };
-      /*
+      /*    for instant action
       reqToCP = { messageType: 2, uuid: uuidv1(), action: 'RemoteStopTransaction', pdu: { transactionId: result.trxId } };
       result = await connCP.sendAndReceive(req.body.evse, reqToCP);
       if (result) {
@@ -110,7 +108,7 @@ function APIController(server) {
     else if (resultDB[0].status == 'Charging' && resultDB[0].occupyingUserId != req.body.user){
       console.log('scan >> Alarm');
       response.responseCode = { type: 'popup', name: 'ask alarm' };
-      /*
+      /* for instant action
       cwjy = { action: 'Alarm', userId: req.body.user, evseSerial: req.body.evse };
       connDBServer.sendOnly(cwjy);
       response.responseCode = 'Accepted';
@@ -232,36 +230,33 @@ function APIController(server) {
     var result = await connDBServer.sendAndReceive(cwjy);
     var remaining, elapsed, avgKW, capa;
 
-    //  there is only one record for this sql tho.
+    elapsed = Math.floor((new Date(Date.now()) - new Date(result[0].started)) / 1000);
+    result[0].elapsed = Math.floor(elapsed / 3600) + ":" + Math.floor((elapsed % 3600) / 60) + ":" + elapsed % 60;
+
+    result[0].price = Math.ceil((result[0].priceHCL + result[0].priceHost) * (result[0].meterNow - result[0].meterStart));
+    avgKW = (result[0].meterNow - result[0].meterStart) / elapsed * 3600;
+
+    /*
+    if (result[0].meterNow - result[0].meterStart > 5) {
+      capa = (result[0].meterNow - result[0].meterStart) / (result[0].currentSoc - result[0].bulkSoc) * 100;
+    }
+    */
+    result[0].avgKW = Math.round(avgKW * 100) / 100;
+
+    if (result[0].fullSoc == 0) {
+      result[0].currentSoc = result[0].bulkSoc;
+      result[0].remaining = 0;
+      result[0].estCost = 0;
+    }
+    else {
+      result[0].currentSoc = Math.round(result[0].bulkSoc + (result[0].meterNow - result[0].meterStart) / capa);
+      //remaining = (result[0].fullSoc - result[0].currentSoc) / avgKW;
+      result[0].remaining = Math.floor(remaining) + ':' + Math.floor(((remaining - Math.floor(remaining)) * 60));
+      result[0].estCost = Math.ceil(remaining * (result[0].priceHCL + result[0].priceHost));
+    }
+
     cwjy = { action: 'EVSEStatus', evseSerial: result[0].evseSerial };
     var r2 = await connDBServer.sendAndReceive(cwjy);
-
-    for (var i in result) {
-      elapsed = Math.floor((new Date(Date.now()) - new Date(result[i].started)) / 1000);
-      result[i].elapsed = Math.floor(elapsed / 3600) + ":" + Math.floor((elapsed % 3600)/ 60) + ":" + elapsed % 60;
-
-      result[i].price = Math.ceil((result[i].priceHCL + result[i].priceHost) * (result[i].meterNow - result[i].meterStart));
-      avgKW = (result[i].meterNow - result[i].meterStart) / elapsed * 3600;
-
-      /*
-      if (result[i].meterNow - result[i].meterStart > 5) {
-        capa = (result[i].meterNow - result[i].meterStart) / (result[i].currentSoc - result[i].bulkSoc) * 100;
-      }
-      */
-      result[i].avgKW = Math.round(avgKW * 100) / 100;
-
-      if (result[i].fullSoc == 0) {
-        result[i].currentSoc = result[i].bulkSoc;
-        result[i].remaining = 0;
-        result[i].estCost = 0;
-      }
-      else {
-        result[i].currentSoc = Math.round(result[i].bulkSoc + (result[i].meterNow - result[i].meterStart) / capa);
-        //remaining = (result[i].fullSoc - result[i].currentSoc) / avgKW;
-        result[i].remaining = Math.floor(remaining) + ':' + Math.floor(((remaining - Math.floor(remaining)) * 60));
-        result[i].estCost = Math.ceil(remaining * (result[i].priceHCL + result[i].priceHost));
-      }
-    }
 
 
     res.response = { responseCode: { type: 'page', name: 'charging status' }, status: r2[0].status, result: result};
