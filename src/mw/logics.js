@@ -21,20 +21,17 @@ function DBController (dbms) {
     switch (cwjy.action) {
       case 'AuthStatus':
         query = `SELECT userId, authStatus FROM user WHERE email = '${cwjy.email}'`;
+        result = await dbConnector.submitSync(query);
+        returnValue = result;
         break;
       case 'SignUp':
         query = `UPDATE user SET password=SHA2('${cwjy.password}', 256) WHERE email = '${cwjy.email}'`;
+        result = await dbConnector.submitSync(query);
+        returnValue = result;
         break;
       case 'Login':
         query = `SELECT userId FROM user WHERE email = '${cwjy.email}' AND password = SHA2('${cwjy.password}', 256)`;
-        break;
-    }
-    result = await dbConnector.submitSync(query);
-
-    switch (cwjy.action) {
-      case 'AuthStatus':
-      case 'SignUp':
-      case 'Login':
+        result = await dbConnector.submitSync(query);
         returnValue = result;
         break;
     }
