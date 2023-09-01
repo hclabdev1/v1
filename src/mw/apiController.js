@@ -328,7 +328,7 @@ function APIController(server) {
     var evses = await connDBServer.sendAndReceive(cwjy);
     var cp = await connDBServer.sendAndReceive({ action: 'GetCPDetail', chargePointId: req.params.cp});
     var yn = await connDBServer.sendAndReceive({ action: 'IsFavorite', chargePointId: req.params.cp, userId: req.params.user});
-    res.response = (yn) ? { responseCode: { type: 'page', name: 'cp info' }, chargePoint: cp, result: evses, favorite: 'yes' }
+    res.response = (yn[0].cnt > 0) ? { responseCode: { type: 'page', name: 'cp info' }, chargePoint: cp, result: evses, favorite: 'yes' }
                         : { responseCode: { type: 'page', name: 'cp info' }, chargePoint: cp, result: evses, favorite: 'no' };
 
     next();

@@ -249,8 +249,8 @@ function DBController (dbms) {
                  WHERE chargePointId = '${cwjy.chargePointId}'`;
         break;
       case 'IsFavorite':
-        query = `SELECT COUNT(*) FROM favorite
-                 WHERE userId = '${cwjy.userId}' AND chargePointId = '${cwjy.chargePointId}'`;
+        query = `SELECT COUNT(*) AS cnt FROM favorite
+                 WHERE userId = '${cwjy.userId}' AND chargePointId = '${cwjy.chargePointId}' AND favoriteOrder > 0`;
         break;
       case 'GetUserFavo':
         query = (cwjy.favo == 'favorite') ? `SELECT c.chargePointName AS chargePointName, f.chargePointId AS chargePointId,
