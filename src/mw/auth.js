@@ -90,19 +90,6 @@ function AuthController () {
       console.log('verification failed');
       res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Failed' }] };
     }
-    /*
-    var index = authList.findIndex(i => i.code == req.params.code);
-    if(index >= 0 && authList[index].exp < Date.now()) {
-      dbConnector.submit(`INSERT INTO user (email, created, authStatus)
-                          VALUES (${authList[index].email}, CURRENT_TIMESTAMP, 'Accepted')`);
-      authList.splice(index, 1);
-      res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Success'}] };
-    } else {
-      console.log('verification failed');
-      res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Failed' }] };
-    }
-    res.response = {token: tok, decoded: dcded};
-    */
 
     console.log(res.response);
     next();
@@ -144,12 +131,6 @@ function AuthController () {
     console.log('decoded: ' + JSON.stringify(decode));
     next();
 
-    /*
-    if(req.params.f == 'e')
-      res.sendFile('/Users/leo/v1/emily.jpg');          // for showing image
-    else 
-      res.download('/Users/leo/v1/dump0703.sql');
-      */
   }
 
   // for test

@@ -5,7 +5,6 @@ function DBController (dbms) {
   var dbSpeedAvg = 0, trxCount = 0, requestCount = 0;
 
   preProcess = (event, cwjy, callback) => {
-    //console.log(`dbServer:preProcess: event: ${event}, cwjy: ${JSON.stringify(cwjy)}`);
   }
 
   showPerformance = () => {
@@ -15,24 +14,45 @@ function DBController (dbms) {
   nnmRequest = async (cwjy, callback) => {
 
   }
+  csmsRequest = async (cwjy, callback) => {
+
+    var query, values;
+    switch (cwjy.action) {
+      case 'cpList':
+        query = `SELECT chargePointId, chargePointName, lat, lng, locationDetail, address, priceHCL, priceHost, priceExtra, evses, avails
+                 FROM chargepoint WHERE ownerId = ?`;
+        values = [cwjy.ownerId];
+        returnValue = await dbConnector.submitSync(query, values);
+        break;
+    }
+  }
 
   authRequest = async (cwjy, callback) => {
-    var returnValue, query, result;
+    var returnValue, query, values, result;
     switch (cwjy.action) {
       case 'AuthStatus':
-        query = `SELECT userId, authStatus FROM user WHERE email = '${cwjy.email}'`;
-        result = await dbConnector.submitSync(query);
+        query = `SELECT userId, authStatus FROM user WHERE email = ?`;
+        values = [cwjy.email];
+        result = await dbConnector.submitSync(query, values);
         returnValue = result;
         break;
       case 'SignUp':
-        query = `UPDATE user SET password=SHA2('${cwjy.password}', 256) WHERE email = '${cwjy.email}'`;
-        result = await dbConnector.submitSync(query);
+        query = `UPDATE user SET password=SHA2(?, 256) WHERE email = ?`;
+        values = [cwjy.password, cwjy.email];
+        result = await dbConnector.submitSync(query, values);
         returnValue = result;
         break;
       case 'Login':
-        query = `SELECT userId FROM user WHERE email = '${cwjy.email}' AND password = SHA2('${cwjy.password}', 256)`;
-        result = await dbConnector.submitSync(query);
+        query = `SELECT userId FROM user WHERE email = ? AND password = SHA2(?, 256)`;
+        values = [cwjy.email, cwjy.password];
+        result = await dbConnector.submitSync(query, values);
         returnValue = result;
+        break;
+      case 'EmailAuth':
+        query = `INSERT INTO user (email, created, authStatus)
+                  VALUES ( ?, CURRENT_TIMESTAMP, 'Accepted')`;
+        values = [cwjy.email];
+        dbConnector.submit(query, values);
         break;
     }
 
@@ -42,67 +62,75 @@ function DBController (dbms) {
 
   extRequest = async (cwjy, callback) => {
     requestCount++;
-    var returnValue, query, result;
+    var returnValue, query, result, values;
     switch (cwjy.action) {
       case 'GetSerial':
-        query = `SELECT evseSerial FROM evse WHERE evseNickname = '${cwjy.evseNickname}'`;
+        query = `SELECT evseSerial FROM evse WHERE evseNickname = ?`;
+        values = [cwjy.evseNickname];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'EVSEStatus':
-        query = `SELECT status FROM evse WHERE evseSerial = '${cwjy.evseSerial}'`;
+        query = `SELECT status FROM evse WHERE evseSerial = ?`;
+        values = [cwjy.evseSerial];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'EVSECheck':
-        query = `SELECT evseSerial, status, occupyingUserId FROM evse WHERE evseNickname = '${cwjy.evseNickname}'`;
+        query = `SELECT evseSerial, status, occupyingUserId FROM evse WHERE evseNickname = ?`;
+        values = [cwjy.evseNickname];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'UserStatus':
-        // evseSerial
         query = `SELECT evseNickname, status, occupyingUserId, 
                         DATE_FORMAT(occupyingEnd, '%Y-%m-%d %H:%i:%s') AS occupyingEnd, connectorId
-                 FROM evse
-                 WHERE occupyingUserId = '${cwjy.userId}'`;
+                  FROM evse
+                  WHERE occupyingUserId = ?`;
+        values = [cwjy.userId];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'ChargingStatus':
-        // chargePointId, userId, evseSerial, trxId, 
         query = `SELECT DATE_FORMAT(started, '%Y-%m-%d %H:%i:%s') AS started,
                         DATE_FORMAT(finished, '%Y-%m-%d %H:%i:%s') AS finished,
                         chargePointName, bulkSoc, fullSoc, meterStart, meterNow, totalkWh, priceHCL, priceHost,
                         evseSerial, evseNickname, trxId
-                 FROM viewbillplus 
-                 WHERE userId = '${cwjy.userId}' ORDER BY trxId DESC LIMIT 1`;
+                  FROM viewbillplus 
+                   WHERE userId = ? ORDER BY trxId DESC LIMIT 1`;
+        values = [cwjy.userId];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'Reserve':
-        query = `UPDATE evse SET status = 'Reserved', occupyingUserId = '${cwjy.userId}', 
-                                 occupyingEnd = DATE_ADD(NOW(), INTERVAL ${constants.SQL_RESERVE_DURATION} MINUTE)
-                 WHERE evseSerial = '${cwjy.evseSerial}'`;
+        query = `UPDATE evse SET status = 'Reserved', occupyingUserId = ?, occupyingEnd = DATE_ADD(NOW(), INTERVAL ? MINUTE)
+                  WHERE evseSerial = ?`;
+        values = [cwjy.userId, constants.SQL_RESERVE_DURATION, cwjy.evseSerial];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'Angry':
-        query = `SELECT occupyingUserId FROM evse WHERE evseSerial = '${cwjy.evseSerial}'`;
-        var target = await dbConnector.submitSync(query);
-        query = `SELECT * FROM notification WHERE recipientId = '${target[0].occupyingUserId}'`;
-        result = await dbConnector.submitSync(query);
+        query = `SELECT occupyingUserId FROM evse WHERE evseSerial = ?`;
+        values = [cwjy.evseSerial];
+        var target = await dbConnector.submitSync(query, values);
+        query = `SELECT * FROM notification WHERE recipientId = ?`;
+        values = [target[0].occupyingUserId];   // actually, don't need this cuz the values are from DB
+        result = await dbConnector.submitSync(query, values);
         query = (!result) ? `INSERT INTO notification (evseSerial, recipientId, type)
-                              VALUES ('${cwjy.evseSerial}', '${target[0].occupyingUserId}', 'Angry')`
+                              VALUES (?, ?, 'Angry')`
                           : null;
-        /*
-        if(!result)
-          query = `INSERT INTO notification (evseSerial, recipientId, type)
-                    VALUES ('${cwjy.evseSerial}', '${target[0].occupyingUserId}', 'Angry')`;
-        else
-          query = null;
-          */
+        values = [cwjy.evseSerial, target[0].occupyingUserId];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'Alarm':
-        query = `INSERT INTO notification (evseSerial, recipientId, type)
-                  VALUES ('${cwjy.evseSerial}', '${cwjy.userId}', 'Waiting')`;
+        query = `INSERT INTO notification (evseSerial, recipientId, type) VALUES (?, ?, 'Waiting')`;
+        values = [cwjy.evseSerial, cwjy.userId];
+        dbConnector.submit(query, values);
         break;
       case 'Report':
         break;
       case 'ShowAllEVSE':
-        // chargePointId
         query = `SELECT chargePointId, chargePointName, address, priceHCL, priceHost, priceExtra,
                         evseSerial, evseNickname, status, occupyingUserId, 
                         DATE_FORMAT(occupyingEnd, '%Y-%m-%d %H:%i:%s') AS occupyingEnd, capacity, connectorId
                  FROM evsebycp 
-                 WHERE chargePointId = '${cwjy.chargePointId}'`;
+                 WHERE chargePointId = ?`;
+        values = [cwjy.chargePointId];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'ShowAllCPbyLoc':
         var box = getBox(cwjy.lat, cwjy.lng, cwjy.rng);
@@ -111,110 +139,127 @@ function DBController (dbms) {
                   FROM chargepoint 
                   WHERE lat < '${box.top}' AND lat > '${box.bottom}'
                   AND lng < '${box.right}' AND lng > '${box.left}'`;
+        returnValue = await dbConnector.submitSync(query);
         break;
       case 'ShowAllCPbyName':
         query = `SELECT chargePointId, chargePointName, ownerId, lat, lng, locationDetail,
                         address, priceHCL, priceHost, priceExtra, evses, avails
                   FROM chargepoint 
-                  WHERE chargePointName LIKE '%${cwjy.name}%'`;
+                  WHERE chargePointName LIKE ?`;
+        values = [`%${cwjy.name}%`];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'UserHistory':
-        // chargePointId, userId, evseSerial, trxId
         query = `SELECT DATE_FORMAT(started, '%Y-%m-%d %H:%i:%s') AS started,
                         DATE_FORMAT(finished, '%Y-%m-%d %H:%i:%s') AS finished,
                         chargePointName, evseNickname, totalkWh, cost 
                  FROM viewbillplus 
-                 WHERE userId = '${cwjy.userId}' ORDER BY trxId DESC`;
+                 WHERE userId = ? ORDER BY trxId DESC`;
+        values = [cwjy.userId];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'BootNotification':                                    
         query = `SELECT evseSerial, heartbeat 
                  FROM evse JOIN chargepoint 
-                 ON evse.chargePointId = chargepoint.chargePointId AND evse.evseSerial = '${cwjy.evseSerial}'
-                 WHERE chargepoint.vendor = '${cwjy.pdu.chargePointVendor}' 
-                       AND chargepoint.model = '${cwjy.pdu.chargePointModel}'`;
+                 ON evse.chargePointId = chargepoint.chargePointId AND evse.evseSerial = ?
+                 WHERE chargepoint.vendor = ? AND chargepoint.model = ?`;
+        var now = Math.floor(Date.now() / 1000);
+        var nowstr = now.toString();
+        values = [cwjy.evseSerial, cwjy.pdu.chargePointVendor, cwjy.pdu.chargePointModel];
+        result = await dbConnector.submitSync(query, values);
+        if (!result)
+          returnValue = { currentTime: nowstr, interval: 0, status: 'Rejected' };
+        else {
+          returnValue = { currentTime: nowstr, interval: result[0].heartbeat, status: 'Accepted' };
+          query = `UPDATE evse SET booted = FROM_UNIXTIME(?), lastHeartbeat = FROM_UNIXTIME(?),
+                                   status = 'Available', occupyinguserid = NULL, occupyingEnd = NULL
+                   WHERE evseSerial = ?`;
+          values = [now, now, cwjy.evseSerial];
+          dbConnector.submit(query, values);
+        }
         break;
       case 'Authorize':                                           
-        query = `SELECT authStatus FROM user WHERE cardNumber = '${cwjy.pdu.idTag}'`;
+        query = `SELECT authStatus FROM user WHERE cardNumber = ?`;
+        values = [cwjy.pdu.idTag];
+        result = await dbConnector.submitSync(query, values);
+        returnValue = (!result) ? { idTagInfo: { status: 'Invalid' } } 
+                                : { idTagInfo: { status: result[0].authStatus } };
         break;
       case 'Heartbeat':                                           
-        query = `UPDATE evse SET lastHeartbeat = CURRENT_TIMESTAMP 
-                 WHERE evseSerial = '${cwjy.evseSerial}'`;
+        query = `UPDATE evse SET lastHeartbeat = CURRENT_TIMESTAMP WHERE evseSerial = ?`;
+        values = [cwjy.evseSerial];
+        dbConnector.submit(query, values);
+        var nowstr = Math.floor(Date.now() / 1000).toString();
+        returnValue = { currentTime: nowstr};
         break;
       case 'MeterValues':
         ///////////////////////////////////////////////////////
         // TODO
         // process metervalue 
-        /*
-        var kWh;
-        for ( var i in cwjy.pdu.meterValue) {
-          for ( var j in cwjy.pdu.meterValue[i].sampledValue) {
-            if(cwjy.pdu.meterValue[i].sampledValue[j].measurand == 'Energy.Active.Import.Register')
-              kWh = cwjy.pdu.meterValue[i].sampledValue[j].value;
-            
+        var kWh, ckWh, A, V, t, time, kw;
+        for (var i in cwjy.pdu.meterValue) {
+          kWh = cwjy.pdu.meterValue[i].sampledValue[0].value;
+          ckWh = cwjy.pdu.meterValue[i].sampledValue[1].value;
+          A = cwjy.pdu.meterValue[i].sampledValue[2].value;
+          V = cwjy.pdu.meterValue[i].sampledValue[3].value;
+          t = cwjy.pdu.meterValue[i].sampledValue[4].value;
+          time = cwjy.pdu.meterValue[i].timestamp;
+          kw = Math.floor(A * V / 1000);
+          query = `SELECT meterStart FROM bill WHERE trxId = ?`;
+          values = [cwjy.pdu.transactionId];
+          result = await dbConnector.submitSync(query, values);
+          if (result[0].meterStart == 0) {
+            query = `UPDATE evse SET lastHeartbeat = FROM_UNIXTIME(?) WHERE evseSerial = ?;
+                    UPDATE bill SET meterNow = ? WHERE trxId = ?;
+                    UPDATE bill SET totalkWh = totalkWh + ? WHERE trxId = ?;
+                    INSERT INTO evselogs (evseSerial, time, temp, V, A, kWh, tkWh)
+                    VALUES (?, FROM_UNIXTIME(?), ?, ?, ?, ?, ?); `;
+            values = [time, cwjy.evseSerial, kWh, cwjy.pdu.transactionId, ckWh, cwjy.pdu.transactionId, 
+                      cwjy.evseSerial, time, t, V, A, kWh, ckWh];
           }
-        }
-        */
-        var kwh = cwjy.pdu.meterValue[0].sampledValue[0].value;
-        var ckWh = cwjy.pdu.meterValue[0].sampledValue[1].value;
-        var A = cwjy.pdu.meterValue[0].sampledValue[2].value;
-        var V = cwjy.pdu.meterValue[0].sampledValue[3].value;
-        var t = cwjy.pdu.meterValue[0].sampledValue[4].value;
-        var time = cwjy.pdu.meterValue[0].timestamp.value;
-        var kw = Math.floor(A * V / 1000);
-        query = `SELECT meterStart FROM bill WHERE trxId = '${cwjy.pdu.transactionId}'`;
-        result = await dbConnector.submitSync(query);
-        if (result[0].meterStart == 0) {
-          query = `UPDATE evse SET lastHeartbeat = FROM_UNIXTIME(${time}) WHERE evseSerial = '${cwjy.evseSerial}';
-                    UPDATE bill SET meterNow = '${kwh}' WHERE trxId = '${cwjy.pdu.transactionId}';
-                    UPDATE bill SET totalkWh = totalkWh + ${ckWh} WHERE trxId = '${cwjy.pdu.transactionId}';
+          else {
+            query = `UPDATE evse SET lastHeartbeat = FROM_UNIXTIME(?) WHERE evseSerial = ?;
+                    UPDATE bill SET meterNow = ? WHERE trxId = ?;
+                    UPDATE bill SET totalkWh = meterNow - meterStart WHERE trxId = ?;
                     INSERT INTO evselogs (evseSerial, time, temp, V, A, kWh, tkWh)
-                    VALUES ('${cwjy.evseSerial}', FROM_UNIXTIME(${time}), ${t}, ${V}, ${A}, ${kwh}, ${ckWh}); `;
+                    VALUES (?, FROM_UNIXTIME(?), ?, ?, ?, ?, ?); `;
+            values = [time, cwjy.evseSerial, kWh, cwjy.pdu.transactionId, cwjy.pdu.transactionId, 
+                      cwjy.evseSerial, time, t, V, A, kWh, ckWh];
+          }
+          result = await dbConnector.submitSync(query, values);
         }
-        else {
-          query = `UPDATE evse SET lastHeartbeat = FROM_UNIXTIME(${time}) WHERE evseSerial = '${cwjy.evseSerial}';
-                    UPDATE bill SET meterNow = '${kwh}' WHERE trxId = '${cwjy.pdu.transactionId}';
-                    UPDATE bill SET totalkWh = meterNow - meterStart WHERE trxId = '${cwjy.pdu.transactionId}';
-                    INSERT INTO evselogs (evseSerial, time, temp, V, A, kWh, tkWh)
-                    VALUES ('${cwjy.evseSerial}', FROM_UNIXTIME(${time}), ${t}, ${V}, ${A}, ${kwh}, ${ckWh}); `;
-        }
+        returnValue = {};
         break;
       case 'StartTransaction':
         cwjy.pdu.transactionId = trxCount++;
-        query = `SELECT capacity FROM evse WHERE evseSerial = '${cwjy.evseSerial}'`;
-        result = await dbConnector.submitSync(query);
+        query = `SELECT capacity FROM evse WHERE evseSerial = ?`;
+        values = [cwjy.evseSerial];
+        result = await dbConnector.submitSync(query, values);
 
-        /*
-        var est = Date.now() / 1000;
-        if(cwjy.pdu.fullSoc > cwjy.pdu.bulkSoc > 0 ) {
-          est += (cwjy.pdu.fullSoc - cwjy.pdu.bulkSoc) / result[0].capacity * 3600;
-        }
-        else {
-          est = 0;
-        }
-        */
+        query = `SELECT userId FROM user WHERE cardNumber = ?`;
+        values = [cwjy.pdu.idTag];
+        result = await dbConnector.submitSync(query, values);
 
-        query = `SELECT userId FROM user WHERE cardNumber = '${cwjy.pdu.idTag}'`;
-        result = await dbConnector.submitSync(query);
         var userId = result ? result[0].userId : cwjy.pdu.idTag;
         var meterStart = cwjy.pdu.meterStart / 1000;
 
-        query = `UPDATE evse SET status = 'Charging', occupyingUserId = '${userId}'
-                  WHERE evseSerial = '${cwjy.evseSerial}';
+        query = `UPDATE evse SET status = 'Charging', occupyingUserId = ? WHERE evseSerial = ?;
                  INSERT INTO bill (started, evseSerial, userId, bulkSoc, meterStart, meterNow, trxId)
-                  VALUES (FROM_UNIXTIME(${cwjy.pdu.timestamp}), '${cwjy.evseSerial}', '${userId}',
-                         '${cwjy.pdu.ressoc}', '${meterStart}', 
-                         '${meterStart}', ${cwjy.pdu.transactionId});
+                  VALUES (FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?);
                  UPDATE bill b INNER JOIN evse e ON b.evseSerial = e.evseSerial
-                  SET b.chargePointId = e.chargePointId, b.evseNickname = e.evseNickname,  b.ownerId = e.ownerId
-                  WHERE b.trxId = ${cwjy.pdu.transactionId};`;
-        // 1000: epoch to tiestamp
+                  SET b.chargePointId = e.chargePointId, b.evseNickname = e.evseNickname, b.ownerId = e.ownerId
+                  WHERE b.trxId = ?;`;
+        values = [userId, cwjy.evseSerial, cwjy.pdu.timestamp, cwjy.evseSerial, userId, 
+                  cwjy.pdu.ressoc, meterStart, meterStart, cwjy.pdu.transactionId, cwjy.pdu.transactionId];
+        dbConnector.submit(query, values);
+        returnValue = { transactionId: cwjy.pdu.transactionId, idTagInfo: { status: 'Accepted' } };
         break;
       case 'StopTransaction':
-        query = `SELECT meterStart, priceHCL, priceHost FROM viewbillplus WHERE trxId = '${cwjy.pdu.transactionId}'`;
-        result = await dbConnector.submitSync(query);
+        query = `SELECT meterStart, priceHCL, priceHost FROM viewbillplus WHERE trxId = ?`;
+        values = [cwjy.pdu.transactionId];
+        result = await dbConnector.submitSync(query, values);
         if(!result) {
           console.warn('no transaction ongoing.');
-          //console.log('logic error. no transaction ongoing.');
           query = '';
           break;
         }
@@ -222,35 +267,50 @@ function DBController (dbms) {
         var totalkWh = meterStop - Number(result[0].meterStart);
         var costhcl = totalkWh * Number(result[0].priceHCL);
         var costhost = totalkWh * Number(result[0].priceHost);
+        var costTotal = costhcl + costhost;
         if (result[0].meterStart == 0) {
-        query = `UPDATE evse SET status = 'Finishing' WHERE evseSerial = '${cwjy.evseSerial}';
-                 UPDATE bill SET finished = FROM_UNIXTIME(${cwjy.pdu.timestamp}), cost = '${costhcl + costhost}',
-                                 costHCL = '${costhcl}', costHost='${costhost}', termination = '${cwjy.pdu.reason}', 
-                                 meterNow = '${meterStop}'
-                  WHERE trxId = '${cwjy.pdu.transactionId}';`;
+          query = `UPDATE evse SET status = 'Finishing' WHERE evseSerial = ?;
+                   UPDATE bill SET finished = FROM_UNIXTIME(?), cost = ?, costHCL = ?, costHost= ?, termination = ?, meterNow = ?
+                   WHERE trxId = ?;`;
+          values = [cwjy.evseSerial, cwjy.pdu.timestamp, costTotal, costhcl, costhost, 
+                    cwjy.pdu.reason, meterStop, cwjy.pdu.transactionId];
         }
         else {
-        query = `UPDATE evse SET status = 'Finishing' WHERE evseSerial = '${cwjy.evseSerial}';
-                 UPDATE bill SET finished = FROM_UNIXTIME(${cwjy.pdu.timestamp}), cost = '${costhcl + costhost}',
-                                 costHCL = '${costhcl}', costHost='${costhost}', termination = '${cwjy.pdu.reason}', 
-                                 meterNow = '${meterStop}', totalkWh = '${totalkWh}'
-                  WHERE trxId = '${cwjy.pdu.transactionId}';`;
+        query = `UPDATE evse SET status = 'Finishing' WHERE evseSerial = ?;
+                 UPDATE bill SET finished = FROM_UNIXTIME(?), cost = ?, costHCL = ?, costHost= ?, 
+                                 termination = ?, meterNow = ?, totalkWh = ?
+                  WHERE trxId = ?;`;
+          values = [cwjy.evseSerial, cwjy.pdu.timestamp, costTotal, costhcl, costhost, 
+                    cwjy.pdu.reason, meterStop, totalkWh, cwjy.pdu.transactionId];
         }
+        dbConnector.submit(query, values);
+        returnValue = {};
         break;
       case 'StatusNotification':
-        query = (cwjy.pdu.errorCode == 'NoError') ? `UPDATE evse SET status = '${cwjy.pdu.status}' WHERE evseSerial = '${cwjy.evseSerial}'`
-                                                  : `INSERT INTO issues (evseSerial, time, errorCode)
-                                                      VALUES ('${cwjy.evseSerial}', FROM_UNIXTIME(${cwjy.pdu.timestamp}), '${cwjy.pdu.errorCode}')`;
+        if(cwjy.pdu.errorCode == 'NoError') {
+          query = `UPDATE evse SET status = ? WHERE evseSerial = ?`;
+          values = [cwjy.pdu.status, cwjy.evseSerial];
+        }
+        else {
+          query = `INSERT INTO issues (evseSerial, time, errorCode) VALUES (?, FROM_UNIXTIME(?), ?)`;
+          values = [cwjy.pdu.status, cwjy.evseSerial, cwjy.evseSerial, cwjy.pdu.timestamp, cwjy.pdu.errorCode];
+        }
+        dbConnector.submit(query, values);
+        returnValue = {};
         break;
       case 'GetCPDetail':
         query = `SELECT chargePointName, chargePointId,  address, locationDetail, lat, lng,
                         priceHCL, priceHost, priceExtra, parkingCondition, evses, avails
                  FROM chargepoint
-                 WHERE chargePointId = '${cwjy.chargePointId}'`;
+                 WHERE chargePointId = ?`;
+        values = [cwjy.chargePointId];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'IsFavorite':
         query = `SELECT COUNT(*) AS cnt FROM favorite
-                 WHERE userId = '${cwjy.userId}' AND chargePointId = '${cwjy.chargePointId}' AND favoriteOrder > 0`;
+                 WHERE userId = ? AND chargePointId = ? AND favoriteOrder > 0`;
+        values = [cwjy.userId, cwjy.chargePointId];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'GetUserFavo':
         query = (cwjy.favo == 'favorite') ? `SELECT c.chargePointName AS chargePointName, f.chargePointId AS chargePointId,
@@ -258,7 +318,7 @@ function DBController (dbms) {
                                                     c.priceHost AS priceHost, c.priceExtra AS priceExtra,
                                                     c.parkingCondition AS parkingCondition, c.avails AS avails
                                               FROM favorite f JOIN chargepoint c ON f.chargePointId = c.chargePointId
-                                              WHERE userId = '${cwjy.userId}'
+                                              WHERE userId = ?
                                               AND favoriteOrder IS NOT NULL ORDER BY favoriteOrder`
                                           : `SELECT c.chargePointName AS chargePointName, f.chargePointId AS chargePointId,
                                                     f.favoriteOrder AS favoriteOrder, c.priceHCL AS priceHCL,
@@ -266,37 +326,47 @@ function DBController (dbms) {
                                                     c.parkingCondition AS parkingCondition,
                                               DATE_FORMAT(recent, '%Y-%m-%d %H:%i:%s') as recent, c.avails AS avails
                                               FROM favorite f JOIN chargepoint c ON f.chargePointId = c.chargePointId
-                                              WHERE userId = '${cwjy.userId}'
+                                              WHERE userId = ?
                                               AND recent IS NOT NULL ORDER BY recent DESC`;
+        values = [cwjy.userId];
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'NewUserFavo':
         if(cwjy.favo == 'favorite') {
-          query = `SELECT MAX(favoriteOrder) AS max FROM favorite WHERE userId = '${cwjy.userId}'`;
-          result = await dbConnector.submitSync(query);
+          query = `SELECT MAX(favoriteOrder) AS max FROM favorite WHERE userId = ?`;
+          values = [cwjy.userId];
+          result = await dbConnector.submitSync(query, values);
           var order = result ? result[0].max + 1 : 1;
-          query = `INSERT INTO favorite (userId, chargePointId, favoriteOrder)
-                    VALUES ('${cwjy.userId}', '${cwjy.chargePointId}', ${order})`;
+          query = `INSERT INTO favorite (userId, chargePointId, favoriteOrder) VALUES (?, ?, ?)`;
+          values = [cwjy.userId, cwjy.chargePointId, order];
         }
         else if(cwjy.favo == 'recent') {
-          query = `SELECT chargePointId AS cpid FROM evse WHERE evseNickname = '${cwjy.evse}'`;
-          result = await dbConnector.submitSync(query);
+          query = `SELECT chargePointId AS cpid FROM evse WHERE evseNickname = ?`;
+          values = [cwjy.evse];
+          result = await dbConnector.submitSync(query, values);
           var cpid = result[0].cpid;
-          console.log(`user: ${cwjy.userId} cp: ${cpid}`);
-          query = `SELECT * FROM favorite WHERE userId = '${cwjy.userId}' AND chargePointId = '${cpid}' AND favoriteOrder = 0`;
-          result = await dbConnector.submitSync(query);
+          //console.log(`user: ${cwjy.userId} cp: ${cpid}`);
+          query = `SELECT * FROM favorite WHERE userId = ? AND chargePointId = ? AND favoriteOrder = 0`;
+          values = [cwjy.userId, cpid];
+          result = await dbConnector.submitSync(query, values);
           query = (result) ? `UPDATE favorite SET recent = CURRENT_TIMESTAMP
-                                  WHERE userId = '${cwjy.userId}' AND chargePointId = '${cpid}' AND favoriteOrder = 0`
+                                  WHERE userId = ? AND chargePointId = ? AND favoriteOrder = 0`
                            : `INSERT INTO favorite (userId, chargePointId, recent, favoriteOrder)
-                                  VALUES ('${cwjy.userId}', '${cpid}', CURRENT_TIMESTAMP, 0)`;
+                                  VALUES (?, ?, CURRENT_TIMESTAMP, 0)`;
+          values = [cwjy.userId, cpid];
         }
         else {
           query = null;
           break;
         }
+        returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'DelUserFavo':
-        query = `DELETE FROM favorite WHERE userId='${cwjy.userId}' AND chargePointId='${cwjy.chargePointId}'
-                                            AND recent IS NULL`;
+        //query = `DELETE FROM favorite WHERE userId='${cwjy.userId}' AND chargePointId='${cwjy.chargePointId}'
+                                            //AND recent IS NULL`;
+        query = `DELETE FROM favorite WHERE userId=? AND chargePointId=?`;
+        values = [cwjy.userId, cwjy.chargePointId];
+        dbConnector.submit(query, values);
         break;
       case 'ChangeAvailability':
       case 'ChangeConfiguration':
@@ -307,71 +377,6 @@ function DBController (dbms) {
       case 'Reset':
         break;
 
-      ///////////////////////////////////////////
-      ///// csms ////////////////////////////////
-      ////////////////////////////////////////////
-      case 'cpList':
-        query = `SELECT chargePointId, chargePointName, lat, lng, locationDetail, address, priceHCL, priceHost, priceExtra, evses 
-                 FROM chargepoint WHERE ownerId = '${cwjy.ownerId}'`;
-        break;
-    }
-    result = await dbConnector.submitSync(query);
-
-    ///////////////////////////////////////////
-    // result message making from here
-    switch (cwjy.action) {
-      case 'GetSerial':
-      case 'UserHistory':
-      case 'ShowAllEVSE':
-      case 'ShowAllCPbyLoc':
-      case 'ShowAllCPbyName':
-      case 'Alarm':
-      case 'Report':
-      case 'Reserve':
-      case 'UserStatus':
-      case 'ChargingStatus':
-      case 'Angry':
-      case 'EVSECheck':     
-      case 'EVSEStatus':
-      case 'IsFavorite':
-      case 'GetUserFavo':
-      case 'NewUserFavo':
-        if(!result)
-          returnValue = null;
-        else
-          returnValue = result;
-        break;
-      case 'Authorize':     
-        returnValue = (!result) ? { idTagInfo: { status: 'Invalid' } } 
-                                : { idTagInfo: { status: result[0].authStatus } };
-        break;
-      case 'Heartbeat':
-        var nowstr = Math.floor(Date.now() / 1000).toString();
-        returnValue = { currentTime: nowstr};
-        break;
-      case 'StartTransaction': 
-        returnValue = { transactionId: cwjy.pdu.transactionId, idTagInfo: { status: 'Accepted' } };
-        break;
-      case 'StopTransaction':  
-      case 'StatusNotification':
-      case 'MeterValues':
-        returnValue = {};
-        break;
-      case 'BootNotification':
-        var now = Math.floor(Date.now() / 1000);
-        var nowstr = now.toString();
-
-        if(!result)
-          returnValue = { currentTime: nowstr, interval: 0, status: 'Rejected' };
-        else {
-          returnValue = { currentTime: nowstr, interval: result[0].heartbeat, status: 'Accepted' };
-
-          query = `UPDATE evse SET booted = FROM_UNIXTIME(${now}), lastHeartbeat = FROM_UNIXTIME(${now}),
-                                   status = 'Available', occupyinguserid = NULL, occupyingEnd = NULL
-                   WHERE evseSerial = '${cwjy.evseSerial}'`;
-          dbConnector.submit(query);
-        }
-        break;
     }
 
     if(callback)
@@ -402,6 +407,7 @@ function DBController (dbms) {
     extRequest,
     nnmRequest,
     authRequest,
+    csmsRequest,
     setTxCount
   }
 

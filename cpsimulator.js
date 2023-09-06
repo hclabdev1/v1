@@ -113,23 +113,23 @@ client.on('connect', (connection) => {
       case 'start':
         if(command[1] && command[2] && command[3])
           sending = `[2, "${uuidv1()}", "StartTransaction", {"connectorId": 1, 
-                          "idTag":"${command[1]}", "meterStart": ${command[3]}, "timestamp": ${Date.now()}, "ressoc": "${command[2]}", "fullSoc": 72.7 }]`;
+                          "idTag":"${command[1]}", "meterStart": ${command[3]}, "timestamp": ${Math.floor(Date.now()/1000)}, "ressoc": "${command[2]}", "fullSoc": 72.7 }]`;
         else
           console.log('usage: start {userid} {bulkSoc} {meterStart}');
         break;
       case 'stop':
         if(command[1] && command[2] && command[3])
           sending = `[2, "${uuidv1()}", "StopTransaction", {"transactionId": "${command[1]}", 
-                          "meterStop":${command[2]}, "timestamp": ${Date.now()}, "reason": "${command[3]}"}]`;
+                          "meterStop":${command[2]}, "timestamp": ${Math.floor(Date.now()/1000)}, "reason": "${command[3]}"}]`;
         else
           console.log('usage: stop {transactionId} {meterStop} {reason}');
         break;
       case 'status':
         if(command[1])
           sending = `[2, "${uuidv1()}", "StatusNotification", {"connectorId": 1,
-                            "errorCode":"error001", "status":"${command[1]}", "timestamp": ${Date.now()}}]`;
+                            "errorCode":"${command[1]}", "status":"${command[2]}", "timestamp": ${Math.floor(Date.now()/1000)}}]`;
         else
-          console.log('usage: status {Available Preparing Charging Finishing Reserved Unavailable}');
+          console.log('usage: status {errorCode} {Available Preparing Charging Finishing Reserved Unavailable}');
         break;
       case 'meter':
         if(command[1])
@@ -189,13 +189,8 @@ client.on('connect', (connection) => {
         sendAndLog(sending);
         meterStart = Math.floor(Math.random() * (3000) * 100) / 100;
         bulkStart = Math.floor(Math.random() * 70 * 100) / 100 + 1;
-        /*
         sending = `[2, "${uuidv1()}", "StartTransaction", {"connectorId": 1, "idTag": "${payload.idTag}", 
-                                                           "meterStart": ${meterStart}, "timeStamp": ${Date.now()},
-                                                           "bulkSoc": ${bulkStart}, "fullSoc": 72.7 }]`;
-                                                           */
-        sending = `[2, "${uuidv1()}", "StartTransaction", {"connectorId": 1, "idTag": "${payload.idTag}", 
-                                                           "meterStart": ${meterStart}, "timestamp": ${Date.now()},
+                                                           "meterStart": ${meterStart}, "timestamp": ${Math.floor(Date.now()/1000)},
                                                            "ressoc": ${bulkStart} }]`;
         setTimeout(sendAndLog, 2000, sending);
         //sendAndLog(sending);
@@ -206,7 +201,7 @@ client.on('connect', (connection) => {
         sendAndLog(sending);
         var meter = meterStart + (Math.random() * 60);
         sending = `[2, "${uuidv1()}", "StopTransaction", {"transactionId": "${payload.transactionId}", "meterStop": ${meter}, 
-                                                          "timestamp": ${Date.now()}, "reason": "1"}]`;
+                                                          "timestamp": ${Math.floor(Date.now()/1000)}, "reason": "1"}]`;
         sendAndLog(sending);
         break;
       case 'ChangeAvailability':

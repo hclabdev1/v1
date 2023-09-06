@@ -1,7 +1,4 @@
 
-// with multi process, same pool.
-// have to go through db server socket.io
-//var myPool;
 function DBConnector(dbms) {
   var trxCount = 0, dbSpeedAvg = 0;
   var log = 'yes';
@@ -14,20 +11,17 @@ function DBConnector(dbms) {
     database: dbms.database
   });
 
-  /*
-  setPool = (pool) => {
-    myPool = pool;
-  }
-  */
-
   setLog = (yn) => {
     log = yn;
   }
+
   // query submit without return
-  submit = (query) => {
+  submit = (query, values) => {
     if (!query)
       return;
-    myPool.query(query, (err, res) => {
+    if (log == 'yes')
+      console.debug(`${new Date().toLocaleString()} query submitted \n ${query} \n values:${values}`);
+    myPool.query(query, values, (err, res) => {
       if(err) {
         console.error('dbConnector:submit: ' + err);
       }
@@ -35,14 +29,14 @@ function DBConnector(dbms) {
   }
 
   // query submit with return
-  submitSync = (query) => {   
+  submitSync = (query, values) => {   
     if (!query)
       return null;
     return new Promise((resolve, reject) => {
       var start = Date.now();
       if (log == 'yes')
-        console.debug(`${new Date().toLocaleString()} query submitted \n ${query}`);
-      myPool.query(query, (err, res) => {
+        console.debug(`${new Date().toLocaleString()} query submitted \n ${query} \n values:${values}`);
+      myPool.query(query, values, (err, res) => {
         if (err) {
           console.error('dbConnector:submitSync: ' + err);
           resolve(null);
@@ -65,7 +59,6 @@ function DBConnector(dbms) {
   }
 
   const dbConnector = {
-    //setPool,
     setLog,
     submit,
     submitSync

@@ -21,6 +21,7 @@ app.use(express.urlencoded({ extended: false}));
 const v1Router = require('../mw/v1Router')(server);
 app.use('/v1', v1Router);
 
+// for landing page for landing page for landing page for landing page for landing page
 const app2 = express();
 const http2 = require('http');
 const landingsvr = http2.createServer(app2);
@@ -28,17 +29,17 @@ app2.use(express.static('/home/leo/zeroone'));
 app2.get('/:id', (req, res) => {
   res.sendFile('/home/leo/zeroone/index.html');
 });
-
 landingsvr.listen(3004, () => {
   console.log('landing server opened');
 });
+// for landing page for landing page for landing page for landing page for landing page
 
 
 const config = require('config');
 const apiserver = config.get('apiserver');
 
 server.listen(apiserver.port, () => {
-  console.log(`api server on. ${new Date(Date.now())} port: ${apiserver.port} `);
+  console.log(`api server on. ${new Date()} port: ${apiserver.port} `);
   
 });
 

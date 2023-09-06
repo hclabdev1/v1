@@ -6,24 +6,27 @@ function DBMonitor(dbms) {
 
   async function watch() {
     //console.log('monitor started');
-    var query, result, cwjy, r2;
+    var query, result, r2, values;
 
     query = `SELECT chargePointId FROM chargepoint`;
     result = await dbConnector.submitSync(query);
     for (var i in result) {
       query = `SELECT COUNT(*) AS cnt FROM evse
-               WHERE chargePointId = '${result[i].chargePointId}' AND status = 'Available'`;
-      r2 = await dbConnector.submitSync(query);
-      query = `UPDATE chargepoint SET avails = ${r2[0].cnt} WHERE chargePointId = '${result[i].chargePointId}'`;
-      dbConnector.submitSync(query);
+               WHERE chargePointId = ? AND status = 'Available'`;
+      values = [result[i].chargePointId];
+      r2 = await dbConnector.submitSync(query, values);
+      query = `UPDATE chargepoint SET avails = ? WHERE chargePointId = ?`;
+      values = [r2[0].cnt, result[i].chargePointId];
+      dbConnector.submitSync(query, values);
     }
     
     query = `SELECT occupyingUserId, evseSerial FROM evse WHERE occupyingEnd < CURRENT_TIMESTAMP AND status='Reserved'`;
-    result = await dbConnector.submitSync(query);
+    result = await dbConnector.submitSync(query, []);
     for (var i in result) {
       query = `UPDATE evse SET occupyingUserId = NULL, occupyingEnd = NULL, status = 'Available' 
-                WHERE evseSerial = '${result[i].evseSerial}'`;
-      dbConnector.submit(query);
+                WHERE evseSerial = ?`;
+      values = [result[i].evseSerial];
+      dbConnector.submit(query, values);
     }
 
     //////////////////////////////////////////
@@ -35,7 +38,7 @@ function DBMonitor(dbms) {
     for (var i in result) {
       // status change to faulted?
       cwjy =  {action: 'StatusNotification', evseSerial: result[i].evseSerial,
-               pdu: {status: 'Unavailable', timeStamp: Date.now()}};
+               pdu: {status: 'Unavailable', timestamp: Math.floor(Date.now()/1000)}};
       //console.log(`watch: ${JSON.stringify(result[i])} is now unavailable`);
       //toDBsvr(cwjy);
     }
@@ -60,9 +63,8 @@ function DBMonitor(dbms) {
           expiryAfter = constants.SQL_WAITING_EXPIRY;
           break;
       }
-      query = `UPDATE notification SET expiry = FROM_UNIXTIME(${Date.now()}) / 1000 + ${expiryAfter} 
+      query = `UPDATE notification SET expiry = FROM_UNIXTIME(${Math.floor(Date.now()/1000)}) + ${expiryAfter} 
                WHERE recipientId = '${result[i].recipientId}' AND evseSerial = '${result[i].evseSerial}' AND expiry IS NULL`;
-      //console.log(`${i} : [${JSON.stringify(result[i])}] [${query}]`);
       dbConnector.submit(query);
       // send notification
       // send notification

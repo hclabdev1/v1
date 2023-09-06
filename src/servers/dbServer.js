@@ -12,46 +12,33 @@ const dbServer = config.get('dbserver');
 const dbms = config.get('dbms');
 
 const controller = require('../mw/logics')(dbms);
-
-//const csmsController = require('../mw/csmsLogics')(dbms);
 //const mailer = require('./lib/mail');
 
-
 io.of('apiServer').on('connection', (socket) => {
-  // communication channel with API server
-  // socket router for mobile app and evse API
-  console.log(`dbServer: connected with ${socket.nsp.name}. ${new Date(Date.now())}`);
-  
+  console.log(`dbServer: connected with ${socket.nsp.name}. ${new Date()}`);
   socket.onAny(controller.preProcess);
   socket.on('cwjy', controller.extRequest);
+});
 
+io.of('auth').on('connection', (socket) => {
+  console.log(`dbServer: connected with ${socket.nsp.name}. ${new Date()}`);
+  socket.onAny(controller.preProcess);
+  socket.on('cwjy', controller.authRequest);
+});
+
+io.of('csms').on('connection', (socket) => {
+  console.log(`dbServer: connected with ${socket.nsp.name}. ${new Date(Date.now())}`);
+  socket.onAny(controller.preProcess);
+  socket.on('cwjy', controller.csmsRequest);
 });
 
 // currently not used
 io.of('nnmServer').on('connection', (socket) => {
-  // communication channel with Notification and Mailing server
-  // socket router for mobile app and evse API
-  console.log(`dbServer: connected with ${socket.nsp.name}. ${new Date(Date.now())}`);
+  console.log(`dbServer: connected with ${socket.nsp.name}. ${new Date()}`);
   socket.onAny(controller.preProcess);
   socket.on('cwjy', controller.nnmRequest);
 });
 
-io.of('auth').on('connection', (socket) => {
-  console.log(`dbServer: connected with ${socket.nsp.name}. ${new Date(Date.now())}`);
-
-  socket.onAny(controller.preProcess);
-  socket.on('cwjy', controller.authRequest);
-
-});
-
-/*
-io.of('csmsServer').on('connection', (socket) => {
-  console.log(`dbServer: connected with ${socket.nsp.name}. ${new Date(Date.now())}`);
-
-  socket.onAny(csmsController.preProcess);
-  socket.on('cwjy', csmsController.request);
-});
-*/
 
 server.listen(dbServer.port, ()=> {
 

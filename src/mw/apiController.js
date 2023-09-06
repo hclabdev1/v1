@@ -2,6 +2,7 @@ const json2html  = require('json2html');
 
 function APIController(server) {
   const connDBServer = require('../lib/socketIOWrapper')('apiServer');
+  const connDBServer2 = require('../lib/socketIOWrapper')('csms');
   const connCP = require('../lib/websocketWrapper')(server);
   var waitingJobs = 0;
   var lockArray = [];
@@ -309,7 +310,7 @@ function APIController(server) {
 
   delUserFavo = (req, res, next) => {
     var cwjy = { action: "DelUserFavo", userId: req.body.user, chargePointId: req.body.cp, favo: 'favorite'};
-    connDBServer.sendAndReceive(cwjy);
+    connDBServer.sendOnly(cwjy);
     res.response = { responseCode: { type: 'popup', name: 'delete ok' }, result: [] };
     next();
   }
@@ -414,38 +415,35 @@ function APIController(server) {
       case 'Reset':
       case 'UnlockConnector':
         break;
-
     }
-    
+    // RemoteStartTransaction and RemoteStopTransaction are handled in other functions
   }
 
   csmsListCP = async (req, res, next) => {
     if (!req.query.userId) {
-      res.response = { responseCode: { type: 'error', name: 'wrong parameters' }, result: []};
+      res.response = { responseCode: { type: 'error', name: 'user ID is needed' }, result: []};
       next();
       return;
     }
     var cwjy, result;
 
     cwjy = { action: 'cpList', ownerId: req.query.userId };
-    var cpinfo = await connDBServer.sendAndReceive(cwjy);
-    //var evsesStatus = 
-    
-    result = {chargepoint: cpinfo };
+    var cpinfo = await connDBServer2.sendAndReceive(cwjy);
 
+    result = {chargepoint: cpinfo };
     res.response = { responseCode: { type: 'page', name: 'cp list' }, result: result};
     next();
       
   }
   csmsListEVSE = async (req, res, next) => {
     if (!req.query.cp) {
-      res.response = { responseCode: { type: 'error', name: 'wrong parameters' }, result: []};
+      res.response = { responseCode: { type: 'error', name: 'chargepoint ID is needed' }, result: []};
       next();
       return;
     }
 
     var cwjy = { action: 'ShowAllEVSE', chargePointId: req.query.cp };
-    var result = await connDBServer.sendAndReceive(cwjy);
+    var result = await connDBServer2.sendAndReceive(cwjy);
     res.response = { responseCode: { type: 'page', name: 'EVSE list' }, result: result};
     next();
   }

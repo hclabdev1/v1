@@ -10,7 +10,7 @@ const http = require('http');
 const ws = http.createServer();
 
 ws.listen(3003, () => {
-  console.log('ws server opened' + new Date(Date.now()));
+  console.log('ws server opened' + new Date());
 });
 // temporary temporary temporary temporary temporary temporary  -->
 // temporary temporary temporary temporary temporary temporary
@@ -86,7 +86,7 @@ function WebSocketWrapper(server) {
     });
 
     connection.on('close', () => {
-      console.log(new Date().toLocaleString() + 'connection close is called');
+      console.log(new Date().toLocaleString() + '::connection close is called');
       //removeConnection(connection)
     });
 
