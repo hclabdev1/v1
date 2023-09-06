@@ -14,8 +14,8 @@ function DBController (dbms) {
   nnmRequest = async (cwjy, callback) => {
 
   }
+  // Charging Station Management System API handling
   csmsRequest = async (cwjy, callback) => {
-
     var query, values;
     switch (cwjy.action) {
       case 'cpList':
@@ -27,6 +27,7 @@ function DBController (dbms) {
     }
   }
 
+  // Authorization requests handling
   authRequest = async (cwjy, callback) => {
     var returnValue, query, values, result;
     switch (cwjy.action) {
@@ -60,6 +61,7 @@ function DBController (dbms) {
       callback(returnValue);
   }
 
+  // App, OCPP requests handling
   extRequest = async (cwjy, callback) => {
     requestCount++;
     var returnValue, query, result, values;
@@ -193,9 +195,6 @@ function DBController (dbms) {
         returnValue = { currentTime: nowstr};
         break;
       case 'MeterValues':
-        ///////////////////////////////////////////////////////
-        // TODO
-        // process metervalue 
         var kWh, ckWh, A, V, t, time, kw;
         for (var i in cwjy.pdu.meterValue) {
           kWh = cwjy.pdu.meterValue[i].sampledValue[0].value;
@@ -362,8 +361,6 @@ function DBController (dbms) {
         returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'DelUserFavo':
-        //query = `DELETE FROM favorite WHERE userId='${cwjy.userId}' AND chargePointId='${cwjy.chargePointId}'
-                                            //AND recent IS NULL`;
         query = `DELETE FROM favorite WHERE userId=? AND chargePointId=?`;
         values = [cwjy.userId, cwjy.chargePointId];
         dbConnector.submit(query, values);
@@ -404,11 +401,11 @@ function DBController (dbms) {
   const dbController = {
     preProcess,
     showPerformance,
-    extRequest,
-    nnmRequest,
-    authRequest,
-    csmsRequest,
-    setTxCount
+    extRequest,         // App, OCPP requests handling
+    nnmRequest,         // notification & monitoring server request handling
+    authRequest,        // authorization requests handling
+    csmsRequest,        // Charging Station Management System API handling
+    setTxCount          // counting transactionId
   }
 
   return dbController;
