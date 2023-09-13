@@ -82,7 +82,7 @@ function AuthController () {
 
   emailAuth = (req, res, next) => {
     var index = authList.findIndex(i => i.code == req.params.code);
-    if(index >= 0 && authList[index].exp < Date.now()) {
+    if(index >= 0 && authList[index].exp > Date.now()) {
       connDBServer.sendOnly({ action: "EmailAuth", email: authList[index].email} );
       authList.splice(index, 1);
       res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Success'}] };
@@ -102,7 +102,7 @@ function AuthController () {
     var token = jwt.sign({ email: req.body.email, exp: Math.floor(Date.now()/1000 + 3600) }, pk, { algorithm: 'HS256'});
     if(result) {
       var ua = uaparser(req.headers['user-agent']);
-      console.log(JSON.stringify(ua));
+      console.debug(`${new Date().toLocaleString()} login submitted\n ${JSON.stringify(ua)}`);
       // TODO
       // last loggedIn update to DB
     }

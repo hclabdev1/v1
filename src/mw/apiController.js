@@ -512,8 +512,8 @@ function APIController(server) {
   }
 
   const apiController = {
-    waitAndGo,
-    hScan,
+    waitAndGo,        // semaphore
+    hScan,            // scan and charge, stop charging, wait alarm, send angry, 
     hAction,
     getUserStatus,
     getUserChargingStatus,
@@ -525,9 +525,9 @@ function APIController(server) {
     getChargePointInfo,
     getChargePointList,
     postDamageReport,
-    evseBoot,
-    evseRequest,
-    evseResponse,
+    evseBoot,         // handling BootNotification only
+    evseRequest,      // handling every other resquests
+    evseResponse,     // handling responses
     csmsListCP,
     csmsListEVSE,
     csmsHistoryCP,

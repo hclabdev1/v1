@@ -66,7 +66,7 @@ function DBController (dbms) {
     requestCount++;
     var returnValue, query, result, values;
     switch (cwjy.action) {
-      case 'GetSerial':
+      case 'GetSerial':         // return evseSerial with evseNickname    for App requests
         query = `SELECT evseSerial FROM evse WHERE evseNickname = ?`;
         values = [cwjy.evseNickname];
         returnValue = await dbConnector.submitSync(query, values);
