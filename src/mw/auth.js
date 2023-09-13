@@ -70,6 +70,8 @@ function AuthController () {
   signup = (req, res, next) => {
     var cwjy = { action: "SignUp", email: req.body.email, password: req.body.password};
     connDBServer.sendOnly(cwjy);
+    res.response = {responseCode: { type: 'page', name: 'signup'}, result: [{status: 'Success'}]};
+    next();
   }
 
   sendAuthPhone = (req, res, next) => {
@@ -106,7 +108,7 @@ function AuthController () {
       // TODO
       // last loggedIn update to DB
     }
-    res.response = (result) ? { responseCode: { type: 'page', name: 'welcome' }, result: [{ status: 'success', token: token}] } :
+    res.response = (result) ? { responseCode: { type: 'page', name: 'welcome' }, result: [{ status: 'success', token: token, userId: result[0].userId}] } :
                               { responseCode: { type: 'page', name: 'welcome' }, result: [{ status: 'fail'}] };
 
     next();
