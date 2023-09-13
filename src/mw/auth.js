@@ -114,7 +114,7 @@ function AuthController () {
     next();
   }
 
-  autoLogin = (req, res, next) => {
+  autoLogin = async (req, res, next) => {
 
     var token = String(req.headers['authorization']).split(' ');
     if (token[0] != 'Bearer') {
@@ -129,7 +129,9 @@ function AuthController () {
       res.json({ responseCode: { type: 'error', name: 'wrong token'}, result: [] });
       return;
     }
-    res.response = { responseCode: { type: 'page', name: 'welcome' }, result: [] };
+    var cwjy = { action: 'GetID', email: decode.email};
+    var result = await connDBServer.sendAndReceive(cwjy);
+    res.response = { responseCode: { type: 'page', name: 'welcome' }, result: result[0].userId };
     console.log('decoded: ' + JSON.stringify(decode));
     next();
 

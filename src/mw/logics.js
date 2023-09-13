@@ -49,6 +49,11 @@ function DBController (dbms) {
         result = await dbConnector.submitSync(query, values);
         returnValue = result;
         break;
+      case 'GetID':
+        query = `SELECT userId FROM user WHERE email = ?`;
+        values = [cwjy.email];
+        result = await dbConnector.submitSync(query, values);
+        returnValue = result;
       case 'EmailAuth':
         query = `INSERT INTO user (email, created, authStatus)
                   VALUES ( ?, CURRENT_TIMESTAMP, 'Accepted')`;
