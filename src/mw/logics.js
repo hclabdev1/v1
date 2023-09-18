@@ -2,6 +2,7 @@ var constants = require('../lib/constants');
 
 function DBController (dbms) {
   const dbConnector = require('../lib/dbConnector')(dbms);
+  dbConnector.setLog('no');
   var dbSpeedAvg = 0, trxCount = 0, requestCount = 0;
 
   preProcess = (event, cwjy, callback) => {

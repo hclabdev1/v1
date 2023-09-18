@@ -4,7 +4,7 @@ var serviceAccount = require('../../hclabfcm-firebase-adminsdk-bjdsm-1eeb19cb09.
 
 function DBMonitor(dbms) {
   var dbConnector = require('../lib/dbConnector')(dbms);
-  dbConnector.setLog('no');
+  dbConnector.setLog('yes');
 
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -57,23 +57,30 @@ function DBMonitor(dbms) {
     result = await dbConnector.submitSync(query);
 
     for (var i in result) {
-      var expiryAfter;
-
       switch (result[i].type) {
         case 'Angry':
           expiryAfter = constants.SQL_ANGRY_EXPIRY;
+          query = `UPDATE notification SET expiry = FROM_UNIXTIME(?) + ? 
+                   WHERE recipientId = ? AND senderId = ?`;
+          values = [Math.floor(Date.now()/1000), constants.SQL_ANGRY_EXPIRY, result[i].recipientId, result[i].senderId];
           break;
         case 'Finishing':
-          expiryAfter = constants.SQL_FINISHING_EXPIRY;
+          query = `UPDATE notification SET expiry = FROM_UNIXTIME(?) + ? 
+                   WHERE recipientId = ? AND evseSerial = ?`;
+          values = [Math.floor(Date.now()/1000), constants.SQL_FINISHING_EXPIRY, result[i].recipientId, result[i].evseSerial];
           break;
         case 'Waiting':
           expiryAfter = constants.SQL_WAITING_EXPIRY;
+          query = `UPDATE notification SET expiry = FROM_UNIXTIME(?) + ? 
+                   WHERE recipientId = ? AND evseSerial = ?`;
+          values = [Math.floor(Date.now()/1000), constants.SQL_WAITING_EXPIRY, result[i].recipientId, result[i].evseSerial];
           break;
       }
-      query = `UPDATE notification SET expiry = FROM_UNIXTIME(${Math.floor(Date.now()/1000)}) + ${expiryAfter} 
-               WHERE recipientId = '${result[i].recipientId}' AND evseSerial = '${result[i].evseSerial}' AND expiry IS NULL`;
-      dbConnector.submit(query);
-      msg = { data: { title: 'test title', body: 'body body', }, token: result[0].endPoint, };
+      dbConnector.submit(query, values);
+      query = `SELECT endPoint FROM user WHERE userId = ?`;
+      values = [result[i].recipientId];
+      r2 = await dbConnector.submitSync(query, values);
+      msg = { data: { title: 'test title', body: 'body body', }, token: r2[0].endPoint, };
       sendPushNotification(msg);
       // send notification
       // send notification
