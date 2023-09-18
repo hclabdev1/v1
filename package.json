@@ -20,6 +20,7 @@
     "config": "^3.3.9",
     "cookie-parser": "^1.4.6",
     "express": "^4.18.2",
+    "firebase-admin": "^11.10.1",
     "http-parser-js": "^0.5.8",
     "json2html": "^0.0.8",
     "jsonwebtoken": "^9.0.0",

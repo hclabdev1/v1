@@ -64,6 +64,7 @@ var V1RouterWrapper = function (server) {
   //router.post('/hscan/report/:evse', upload.array('photos', 5), controller.postDamageReport, controller.writeResponse);
   router.post('/hscan/report/:evse', upload.single('photos'), controller.postDamageReport, controller.writeResponse);
 
+  router.get('/user/info', auth.verify, controller.getUserInfo, controller.writeResponse);
   router.get('/user/status', auth.verify, controller.getUserStatus, controller.writeResponse); // parameters: userid
   router.get('/user/chargingstatus', auth.verify, controller.getUserChargingStatus, controller.writeResponse); // parameters: userid
   router.get('/user/history', auth.verify, controller.getUserChargingHistory, controller.writeResponse);       // parameters: userid, from-date, to-date

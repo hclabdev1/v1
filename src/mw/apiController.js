@@ -202,13 +202,14 @@ function APIController(server) {
     next();
   }
 
+  getUserInfo = async (req, res, next) => {
+    var cwjy = { action: "UserInfo", userId: req.params.user };
+    var result = await connDBServer.sendAndReceive(cwjy);
+    res.response = { responseCode: { type: 'page', name: 'user status' }, result: result};
+    next();
+  }
+
   getUserStatus = async (req, res, next) => {
-    if(req.auth == 'fail') {
-      res.response = { responseCode: { type: 'page', name: 'verification failed'}, result: [] };
-      next();
-      return;
-    }
-    waitingJobs++;
 
     var cwjy = { action: "UserStatus", userId: req.params.user };
     var result = await connDBServer.sendAndReceive(cwjy);
@@ -515,6 +516,7 @@ function APIController(server) {
     waitAndGo,        // semaphore
     hScan,            // scan and charge, stop charging, wait alarm, send angry, 
     hAction,
+    getUserInfo,
     getUserStatus,
     getUserChargingStatus,
     getUserChargingHistory,

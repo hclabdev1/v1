@@ -1,12 +1,18 @@
 var constants = require('../lib/constants');
+var admin = require('firebase-admin');
+var serviceAccount = require('../../hclabfcm-firebase-adminsdk-bjdsm-1eeb19cb09.json');
 
 function DBMonitor(dbms) {
   var dbConnector = require('../lib/dbConnector')(dbms);
   dbConnector.setLog('no');
 
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+
   async function watch() {
     //console.log('monitor started');
-    var query, result, r2, values;
+    var query, result, r2, values, msg;
 
     query = `SELECT chargePointId FROM chargepoint`;
     result = await dbConnector.submitSync(query);
@@ -42,6 +48,7 @@ function DBMonitor(dbms) {
       //console.log(`watch: ${JSON.stringify(result[i])} is now unavailable`);
       //toDBsvr(cwjy);
     }
+    */
 
     //////////////////////////////////////////
     // notification all
@@ -66,6 +73,8 @@ function DBMonitor(dbms) {
       query = `UPDATE notification SET expiry = FROM_UNIXTIME(${Math.floor(Date.now()/1000)}) + ${expiryAfter} 
                WHERE recipientId = '${result[i].recipientId}' AND evseSerial = '${result[i].evseSerial}' AND expiry IS NULL`;
       dbConnector.submit(query);
+      msg = { data: { title: 'test title', body: 'body body', }, token: result[0].endPoint, };
+      sendPushNotification(msg);
       // send notification
       // send notification
       // send notification
@@ -78,7 +87,6 @@ function DBMonitor(dbms) {
                 recipientId = '${result[i].recipientId}' AND expiry = '${result[i].expiry}'`;
       dbConnector.submit(query);
     };
-    */
 
   };
 
@@ -86,7 +94,18 @@ function DBMonitor(dbms) {
   function registerSender(sendingFunction) {
     console.log('registerSender: assigned');
     toDBsvr = sendingFunction;
-  }
+  };
+
+  function sendPushNotification (message) {
+    admin.messaging()
+         .send(message)
+         .then((response) => {
+          console.log(`${new Date().toLocaleString()} push sent: ${JSON.stringify(response)}`);
+         })
+         .catch((err) => {
+          console.log(`${new Date().toLocaleString()} push error: ${err}`);
+         });
+  };
 
   const dbMonitor = {
     watch,

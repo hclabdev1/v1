@@ -29,16 +29,25 @@ function AuthController () {
 
     // TODO
     // check if the email is registered already
+    var cwjy = { action: "AuthStatus", email: req.params.email };
+    var result = await connDBServer.sendAndReceive(cwjy);
+    if (result) {
+      res.response = { responseCode: { type: 'error', name: 'signup', result: [{ status: 'the email is already in use' }] } };
+      next();
+      return;
+    }
 
-    var authItem = { email: req.params.email, exp: (Date.now() + constants.EMAIL_AUTH_EXPIRY), 
-                    code: Math.round(Math.random() * 900000 + 100000) };
-    
+    var authItem = {
+      email: req.params.email, exp: (Date.now() + constants.EMAIL_AUTH_EXPIRY),
+      status: 1, code: Math.round(Math.random() * 900000 + 100000)
+    };
+    // code: 6 digits random number
+
     authList.push(authItem);
 
     var serviceUrl = (process.platform == 'linux') ? service.baseUrl : service.macUrl;
     let info = await transporter.sendMail({
-        from: smtp.from,
-        to: req.params.email,
+        from: smtp.from, to: req.params.email,
         subject: 'HcLab email verification',
         html: `<HTML>
                 <HEAD>
@@ -68,25 +77,39 @@ function AuthController () {
   }
 
   signup = (req, res, next) => {
-    var cwjy = { action: "SignUp", email: req.body.email, password: req.body.password};
-    connDBServer.sendOnly(cwjy);
-    res.response = {responseCode: { type: 'page', name: 'signup'}, result: [{status: 'Success'}]};
-    next();
+    // temporarily not checking auth status for test
+    //var index = authList.findIndex(i => i.code == req.params.code);
+    //if(index >= 0 && authList[index].status == 2) {
+      var cwjy = { action: "SignUp", email: req.body.email, password: req.body.password };
+      connDBServer.sendOnly(cwjy);
+      res.response = { responseCode: { type: 'page', name: 'signup' }, result: [{ status: 'Success' }] };
+      next();
+      //authList.splice(index, 1);
+      return;
+    //}
+    //res.response = { responseCode: { type: 'error', name: 'signup' }, result: [{ status: 'not authorized'}] };
   }
 
+  // temporarily no auth. just storing
   sendAuthPhone = (req, res, next) => {
+    var cwjy = { action: "RegisterPhone", phone: req.body.phone, email: req.body.email };
+    connDBServer.sendOnly(cwjy);
 
+    res.response = { responseCode: { type: 'page', name: 'register phone number'}, result: [{ status: 'Success'}]};
+    next();
   }
 
   phoneStatus = (req, res, next) => {
 
+    res.response = { responseCode: { type: 'page', name: 'phone status'}, result: [{ status: 'Success'}]};
+    next();
   }
 
   emailAuth = (req, res, next) => {
     var index = authList.findIndex(i => i.code == req.params.code);
-    if(index >= 0 && authList[index].exp > Date.now()) {
+    if(index >= 0 && authList[index].exp > Date.now() && authList[index].status == 1) {
       connDBServer.sendOnly({ action: "EmailAuth", email: authList[index].email} );
-      authList.splice(index, 1);
+      authList[index].status = 2;
       res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Success'}] };
     } else {
       console.log('verification failed');
@@ -99,14 +122,14 @@ function AuthController () {
 
 
   login = async (req, res, next) => {
-    var cwjy = { action: 'Login', email: req.body.email, password: req.body.password };
+    var cwjy = { action: 'Login', email: req.body.email, password: req.body.password};
     var result = await connDBServer.sendAndReceive(cwjy);
     var token = jwt.sign({ email: req.body.email, exp: Math.floor(Date.now()/1000 + 3600) }, pk, { algorithm: 'HS256'});
     if(result) {
       var ua = uaparser(req.headers['user-agent']);
-      console.debug(`${new Date().toLocaleString()} login submitted\n ${JSON.stringify(ua)}`);
-      // TODO
-      // last loggedIn update to DB
+      cwjy = { action: 'PostLogin', email: req.body.email, fcmToken: req.body.fcmToken, loggedIn: ua.ua};
+      connDBServer.sendOnly(cwjy);
+      //console.debug(`${new Date().toLocaleString()} login submitted\n ${JSON.stringify(ua)}`);
     }
     res.response = (result) ? { responseCode: { type: 'page', name: 'welcome' }, result: [{ status: 'success', token: token, userId: result[0].userId}] } :
                               { responseCode: { type: 'page', name: 'welcome' }, result: [{ status: 'fail'}] };
@@ -116,6 +139,7 @@ function AuthController () {
 
   autoLogin = async (req, res, next) => {
 
+    console.log('autologin with: ' + JSON.stringify(req.body));
     var token = String(req.headers['authorization']).split(' ');
     if (token[0] != 'Bearer') {
       console.log('No Bear.');

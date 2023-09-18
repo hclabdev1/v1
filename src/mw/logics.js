@@ -49,6 +49,11 @@ function DBController (dbms) {
         result = await dbConnector.submitSync(query, values);
         returnValue = result;
         break;
+      case 'PostLogin':
+        query = `UPDATE user SET endPoint = ? WHERE email = ?`;
+        values = [cwjy.fcmToken, cwjy.email];
+        dbConnector.submit(query, values);
+        break;
       case 'GetID':
         query = `SELECT userId FROM user WHERE email = ?`;
         values = [cwjy.email];
@@ -60,6 +65,10 @@ function DBController (dbms) {
         values = [cwjy.email];
         dbConnector.submit(query, values);
         break;
+      case 'RegisterPhone':
+        query = `UPDATE user SET phone = ? WHERE email = ?`;
+        values = [cwjy.phone, cwjy.email];
+        dbConnector.submit(query, values);
     }
 
     if(callback)
@@ -84,6 +93,11 @@ function DBController (dbms) {
       case 'EVSECheck':
         query = `SELECT evseSerial, status, occupyingUserId FROM evse WHERE evseNickname = ?`;
         values = [cwjy.evseNickname];
+        returnValue = await dbConnector.submitSync(query, values);
+        break;
+      case 'UserInfo':
+        query = `SELECT phone, email, authStatus, cardNumber FROM user WHERE userId = ?`;
+        values = [cwjy.userId];
         returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'UserStatus':
@@ -287,6 +301,10 @@ function DBController (dbms) {
           values = [cwjy.evseSerial, cwjy.pdu.timestamp, costTotal, costhcl, costhost, 
                     cwjy.pdu.reason, meterStop, totalkWh, cwjy.pdu.transactionId];
         }
+        dbConnector.submit(query, values);
+
+        query = `INSERT INTO notification (evseSerial, recipientId, type) VALUES (?, ?, 'Finishing')`;
+        values = [cwjy.evseSerial, cwjy.userId];
         dbConnector.submit(query, values);
         returnValue = {};
         break;
