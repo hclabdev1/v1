@@ -55,10 +55,10 @@ var V1RouterWrapper = function (server) {
 
   //
 
-  router.put('/hscan/scan', controller.waitAndGo, controller.hScan, controller.writeResponse);
-  router.put('/hscan/action', controller.waitAndGo, controller.hAction, controller.writeResponse);
-  //router.put('/hscan/scan', controller.waitAndGo, auth.verify, controller.hScan, controller.writeResponse);
-  //router.put('/hscan/action', controller.waitAndGo, auth.verify, controller.hAction, controller.writeResponse);
+  //router.put('/hscan/scan', controller.waitAndGo, controller.hScan, controller.writeResponse);
+  //router.put('/hscan/action', controller.waitAndGo, controller.hAction, controller.writeResponse);
+  router.put('/hscan/scan', auth.verify, controller.waitAndGo, controller.hScan, controller.writeResponse);
+  router.put('/hscan/action', auth.verify, controller.waitAndGo, controller.hAction, controller.writeResponse);
 
   //router.post('/hscan/report/:evse', controller.postDamageReport, controller.writeResponse);
   //router.post('/hscan/report/:evse', upload.array('photos', 5), controller.postDamageReport, controller.writeResponse);
@@ -77,10 +77,10 @@ var V1RouterWrapper = function (server) {
   router.delete('/user/favorite', auth.verify, controller.delUserFavo, controller.writeResponse);
 
   // CSMS (Charging Station Management System) API
-  router.get('/csms/list/cp', controller.csmsListCP, controller.writeResponse);                    // parameters: userid, from-date, to-date
-  router.get('/csms/list/evse', controller.csmsListEVSE, controller.writeResponse);                    // parameters: userid, from-date, to-date
-  router.get('/csms/history/cp', controller.csmsHistoryCP, controller.writeResponse);                            // parameters: userid
-  router.get('/csms/history/evse', controller.csmsHistoryEVSE, controller.writeResponse);                            // parameters: userid
+  router.get('/csms/list/cp', controller.csmsListCP, controller.writeResponse);        
+  router.get('/csms/list/evse', controller.csmsListEVSE, controller.writeResponse);    
+  router.get('/csms/history/cp', controller.csmsHistoryCP, controller.writeResponse);  
+  router.get('/csms/history/evse', controller.csmsHistoryEVSE, controller.writeResponse); 
   //router.put('/csms', controller.csmsControl, controller.writeResponse);                          // 
 
   return router;

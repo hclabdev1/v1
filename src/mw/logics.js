@@ -2,7 +2,7 @@ var constants = require('../lib/constants');
 
 function DBController (dbms) {
   const dbConnector = require('../lib/dbConnector')(dbms);
-  dbConnector.setLog('no');
+  dbConnector.setLog('yes');
   var dbSpeedAvg = 0, trxCount = 0, requestCount = 0;
 
   preProcess = (event, cwjy, callback) => {
@@ -12,12 +12,9 @@ function DBController (dbms) {
     console.log(`dbServer:: total transactions: ${requestCount}, average processing time(ms): ${dbSpeedAvg}`);
   }
 
-  nnmRequest = async (cwjy, callback) => {
-
-  }
   // Charging Station Management System API handling
   csmsRequest = async (cwjy, callback) => {
-    var query, values;
+    var query, values, returnValue;
     switch (cwjy.action) {
       case 'cpList':
         query = `SELECT chargePointId, chargePointName, lat, lng, locationDetail, address, priceHCL, priceHost, priceExtra, evses, avails
@@ -25,7 +22,25 @@ function DBController (dbms) {
         values = [cwjy.ownerId];
         returnValue = await dbConnector.submitSync(query, values);
         break;
+      case 'cpHistory':
+        query = `SELECT DATE_FORMAT(finished, '%Y-%m-%d %H:%i:%s') AS finished, totalkWh, cost, evseSerial, evseNickname
+                 FROM viewbillplus 
+                 WHERE chargePointId = ? AND finished > DATE_SUB(NOW(), INTERVAL ? DAY)`;
+        //var date = new Date(Date.now() - cwjy.date * 24 * 60 * 60 * 1000).toISOString().substring(0,10);
+        values = [cwjy.chargePointId, cwjy.date];
+        returnValue = await dbConnector.submitSync(query, values);
+        break;
+      case 'EVSEHistory':
+        query = `SELECT DATE_FORMAT(finished, '%Y-%m-%d %H:%i:%s') AS finished, totalkWh, cost, evseSerial, evseNickname
+                 FROM viewbillplus 
+                 WHERE evseSerial = ? AND finished > DATE_SUB(NOW(), INTERVAL ? DAY)`;
+        //var date = new Date(Date.now() - cwjy.date * 24 * 60 * 60 * 1000).toISOString().substring(0,10);
+        values = [cwjy.evseSerial, cwjy.date];
+        returnValue = await dbConnector.submitSync(query, values);
+        break;
     }
+    if(callback)
+      callback(returnValue);
   }
 
   // Authorization requests handling
@@ -426,7 +441,7 @@ function DBController (dbms) {
     preProcess,
     showPerformance,
     extRequest,         // App, OCPP requests handling
-    nnmRequest,         // notification & monitoring server request handling
+    //nnmRequest,         // notification & monitoring server request handling
     authRequest,        // authorization requests handling
     csmsRequest,        // Charging Station Management System API handling
     setTxCount          // counting transactionId

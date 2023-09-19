@@ -28,7 +28,7 @@ io.of('auth').on('connection', (socket) => {
 
 io.of('csms').on('connection', (socket) => {
   console.log(`dbServer: connected with ${socket.nsp.name}. ${new Date(Date.now())}`);
-  socket.onAny(controller.preProcess);
+  //socket.onAny(controller.preProcess);
   socket.on('cwjy', controller.csmsRequest);
 });
 
@@ -36,7 +36,7 @@ io.of('csms').on('connection', (socket) => {
 io.of('nnmServer').on('connection', (socket) => {
   console.log(`dbServer: connected with ${socket.nsp.name}. ${new Date()}`);
   socket.onAny(controller.preProcess);
-  socket.on('cwjy', controller.nnmRequest);
+  socket.on('cwjy', controller.extRequest);
 });
 
 

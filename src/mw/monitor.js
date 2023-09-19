@@ -1,10 +1,11 @@
 var constants = require('../lib/constants');
 var admin = require('firebase-admin');
 var serviceAccount = require('../../hclabfcm-firebase-adminsdk-bjdsm-1eeb19cb09.json');
+const connDBServer = require('../lib/socketIOWrapper')('nnmServer');
 
 function DBMonitor(dbms) {
   var dbConnector = require('../lib/dbConnector')(dbms);
-  dbConnector.setLog('yes');
+  dbConnector.setLog('no');
 
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
@@ -12,7 +13,7 @@ function DBMonitor(dbms) {
 
   async function watch() {
     //console.log('monitor started');
-    var query, result, r2, values, msg;
+    var query, result, r2, values, msg, cwjy;
 
     query = `SELECT chargePointId FROM chargepoint`;
     result = await dbConnector.submitSync(query);
@@ -37,18 +38,26 @@ function DBMonitor(dbms) {
 
     //////////////////////////////////////////
     // heartbeat
-    /*
-    query = `SELECT evseSerial, lastHeartbeat FROM evse 
-             WHERE lastHeartBeat < DATE_SUB(NOW(), INTERVAL ${constants.SQL_HEARTBEAT_LIMIT} MINUTE` ;
+    query = `SELECT evseSerial, lastHeartbeat, status FROM evse 
+             WHERE lastHeartBeat < DATE_SUB(NOW(), INTERVAL ${constants.SQL_HEARTBEAT_LIMIT} MINUTE)` ;
     result = await dbConnector.submitSync(query);
     for (var i in result) {
       // status change to faulted?
-      cwjy =  {action: 'StatusNotification', evseSerial: result[i].evseSerial,
-               pdu: {status: 'Unavailable', timestamp: Math.floor(Date.now()/1000)}};
+      query = `UPDATE evse SET status = ? WHERE evseSerial = ?;
+               INSERT INTO issues (evseSerial, time, errorCode) VALUES (?, CURRENT_TIMESTAMP, ?);`;
+      values = ['Unavailable', result[i].evseSerial, result[i].evseSerial, 'No Heartbeat'];
+      dbConnector.submit(query, values);
       //console.log(`watch: ${JSON.stringify(result[i])} is now unavailable`);
-      //toDBsvr(cwjy);
+      if(result[i].status == 'Charging') {
+        query = `SELECT trxid, userId, meterNow FROM bill WHERE evseSerial = '${result[i].evseSerial}' ORDER BY trxid DESC LIMIT 1`;
+        r2 = await dbConnector.submitSync(query, []);
+        cwjy = { action: 'StopTransaction', evseSerial: result[i].evseSerial, userId: r2[0].userId, 
+                  pdu: { transactionId: r2[0].trxid, meterStop: r2[0].meterNow, reason: 'Other', 
+                  timestamp: Math.floor(Date.now()/1000)}};
+        connDBServer.sendOnly(cwjy);
+      }
     }
-    */
+
 
     //////////////////////////////////////////
     // notification all
@@ -98,10 +107,6 @@ function DBMonitor(dbms) {
   };
 
   // currently not used. connect to dbms directly from here via dbConnector
-  function registerSender(sendingFunction) {
-    console.log('registerSender: assigned');
-    toDBsvr = sendingFunction;
-  };
 
   function sendPushNotification (message) {
     admin.messaging()
@@ -115,8 +120,7 @@ function DBMonitor(dbms) {
   };
 
   const dbMonitor = {
-    watch,
-    registerSender
+    watch
   }
   return dbMonitor;
 }

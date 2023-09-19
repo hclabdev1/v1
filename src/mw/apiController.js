@@ -449,9 +449,29 @@ function APIController(server) {
     next();
   }
 
-  csmsHistoryCP = (req, res, next) => {
+  csmsHistoryCP = async (req, res, next) => {
+    if (!req.query.cp) {
+      res.response = { responseCode: { type: 'error', name: 'chargepoint ID is needed' }, result: []};
+      next();
+      return;
+    }
+
+    var cwjy = { action: 'cpHistory', chargePointId: req.query.cp, date: req.query.date };
+    var result = await connDBServer2.sendAndReceive(cwjy);
+    res.response = { responseCode: { type: 'page', name: 'CP Charging History'}, result: result};
+    next();
+
   }
-  csmsHistoryEVSE = (req, res, next) => {
+  csmsHistoryEVSE = async (req, res, next) => {
+    if (!req.query.evseSerial) {
+      res.response = { responseCode: { type: 'error', name: 'EVSE Serial is needed' }, result: []};
+      next();
+      return;
+    }
+    var cwjy = { action: 'EVSEHistory', evseSerial: req.query.evseSerial, date: req.query.date };
+    var result = await connDBServer2.sendAndReceive(cwjy);
+    res.response = { responseCode: { type: 'page', name: 'EVSE Charging History'}, result: result};
+    next();
   }
 
 

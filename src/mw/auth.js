@@ -84,7 +84,7 @@ function AuthController () {
       connDBServer.sendOnly(cwjy);
       res.response = { responseCode: { type: 'page', name: 'signup' }, result: [{ status: 'Success' }] };
       next();
-      //authList.splice(index, 1);
+      authList.splice(index, 1);
       return;
     //}
     //res.response = { responseCode: { type: 'error', name: 'signup' }, result: [{ status: 'not authorized'}] };
