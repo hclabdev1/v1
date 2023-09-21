@@ -81,6 +81,7 @@ var V1RouterWrapper = function (server) {
   router.get('/csms/list/evse', controller.csmsListEVSE, controller.writeResponse);    
   router.get('/csms/history/cp', controller.csmsHistoryCP, controller.writeResponse);  
   router.get('/csms/history/evse', controller.csmsHistoryEVSE, controller.writeResponse); 
+  router.get('/csms/report/cp', controller.csmsReportCP, controller.writeResponse);
   //router.put('/csms', controller.csmsControl, controller.writeResponse);                          // 
 
   return router;

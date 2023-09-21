@@ -23,19 +23,22 @@ function DBController (dbms) {
         returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'cpHistory':
-        query = `SELECT DATE_FORMAT(finished, '%Y-%m-%d %H:%i:%s') AS finished, totalkWh, cost, evseSerial, evseNickname
+        query = `SELECT DATE_FORMAT(finished, '%Y-%m-%d %H:%i:%s') AS finished, 
+                        DATE_FORMAT(finished, '%m') AS month,
+                        DATE_FORMAT(finished, '%H') AS time,
+                        totalkWh, cost, evseSerial, evseNickname
                  FROM viewbillplus 
-                 WHERE chargePointId = ? AND finished > DATE_SUB(NOW(), INTERVAL ? DAY)`;
+                 WHERE chargePointId = ? AND finished >= ? AND finished <= ?`;
         //var date = new Date(Date.now() - cwjy.date * 24 * 60 * 60 * 1000).toISOString().substring(0,10);
-        values = [cwjy.chargePointId, cwjy.date];
+        values = [cwjy.chargePointId, cwjy.startDate, cwjy.endDate];
         returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'EVSEHistory':
         query = `SELECT DATE_FORMAT(finished, '%Y-%m-%d %H:%i:%s') AS finished, totalkWh, cost, evseSerial, evseNickname
                  FROM viewbillplus 
-                 WHERE evseSerial = ? AND finished > DATE_SUB(NOW(), INTERVAL ? DAY)`;
+                 WHERE evseSerial = ? AND finished >= ? AND finished <= ?`;
         //var date = new Date(Date.now() - cwjy.date * 24 * 60 * 60 * 1000).toISOString().substring(0,10);
-        values = [cwjy.evseSerial, cwjy.date];
+        values = [cwjy.evseSerial, cwjy.startDate, cwjy.endDate];
         returnValue = await dbConnector.submitSync(query, values);
         break;
     }

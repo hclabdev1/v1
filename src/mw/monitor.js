@@ -1,6 +1,6 @@
 var constants = require('../lib/constants');
 var admin = require('firebase-admin');
-var serviceAccount = require('../../hclabfcm-firebase-adminsdk-bjdsm-1eeb19cb09.json');
+var serviceAccount = require('../../hclabfcm-firebase-adminsdk-bjdsm-2d287a3504.json');
 const connDBServer = require('../lib/socketIOWrapper')('nnmServer');
 
 function DBMonitor(dbms) {
@@ -69,39 +69,36 @@ function DBMonitor(dbms) {
       switch (result[i].type) {
         case 'Angry':
           expiryAfter = constants.SQL_ANGRY_EXPIRY;
-          query = `UPDATE notification SET expiry = FROM_UNIXTIME(?) + ? 
+          query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
                    WHERE recipientId = ? AND senderId = ?`;
-          values = [Math.floor(Date.now()/1000), constants.SQL_ANGRY_EXPIRY, result[i].recipientId, result[i].senderId];
+          values = [constants.SQL_ANGRY_EXPIRY, result[i].recipientId, result[i].senderId];
           break;
         case 'Finishing':
-          query = `UPDATE notification SET expiry = FROM_UNIXTIME(?) + ? 
+          query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
                    WHERE recipientId = ? AND evseSerial = ?`;
-          values = [Math.floor(Date.now()/1000), constants.SQL_FINISHING_EXPIRY, result[i].recipientId, result[i].evseSerial];
+          values = [constants.SQL_FINISHING_EXPIRY, result[i].recipientId, result[i].evseSerial];
           break;
         case 'Waiting':
           expiryAfter = constants.SQL_WAITING_EXPIRY;
-          query = `UPDATE notification SET expiry = FROM_UNIXTIME(?) + ? 
+          query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
                    WHERE recipientId = ? AND evseSerial = ?`;
-          values = [Math.floor(Date.now()/1000), constants.SQL_WAITING_EXPIRY, result[i].recipientId, result[i].evseSerial];
+          values = [constants.SQL_WAITING_EXPIRY, result[i].recipientId, result[i].evseSerial];
           break;
       }
       dbConnector.submit(query, values);
       query = `SELECT endPoint FROM user WHERE userId = ?`;
       values = [result[i].recipientId];
       r2 = await dbConnector.submitSync(query, values);
-      msg = { data: { title: 'test title', body: 'body body', }, token: r2[0].endPoint, };
-      sendPushNotification(msg);
+      if(r2) {
+        msg = { data: { title: 'test title', body: 'body body', }, token: r2[0].endPoint, };
+        sendPushNotification(msg);
+      }
+      else {
+        console.log(`${Date.now().toLocaleString} :: no endPoint for ${resule[i].recipientId}`);
+      }
       // send notification
       // send notification
       // send notification
-    };
-
-    query = `SELECT * FROM notification WHERE expiry > CURRENT_TIMESTAMP`;
-    result = await dbConnector.submitSync(query);
-    for (var i in result) {
-      query = `DELETE FROM notification WHERE 
-                recipientId = '${result[i].recipientId}' AND expiry = '${result[i].expiry}'`;
-      dbConnector.submit(query);
     };
 
   };
@@ -115,7 +112,7 @@ function DBMonitor(dbms) {
           console.log(`${new Date().toLocaleString()} push sent: ${JSON.stringify(response)}`);
          })
          .catch((err) => {
-          console.log(`${new Date().toLocaleString()} push error: ${err}`);
+          console.log(`${new Date().toLocaleString()} :: ${err}`);
          });
   };
 

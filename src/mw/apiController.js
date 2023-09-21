@@ -456,7 +456,7 @@ function APIController(server) {
       return;
     }
 
-    var cwjy = { action: 'cpHistory', chargePointId: req.query.cp, date: req.query.date };
+    var cwjy = { action: 'cpHistory', chargePointId: req.query.cp, startDate: req.query.startDate, endDate: req.query.endDate };
     var result = await connDBServer2.sendAndReceive(cwjy);
     res.response = { responseCode: { type: 'page', name: 'CP Charging History'}, result: result};
     next();
@@ -468,9 +468,37 @@ function APIController(server) {
       next();
       return;
     }
-    var cwjy = { action: 'EVSEHistory', evseSerial: req.query.evseSerial, date: req.query.date };
+    var cwjy = { action: 'EVSEHistory', evseSerial: req.query.evseSerial, startDate: req.query.startDate, endDate: req.query.endDate };
     var result = await connDBServer2.sendAndReceive(cwjy);
     res.response = { responseCode: { type: 'page', name: 'EVSE Charging History'}, result: result};
+    next();
+  }
+
+  // query: type='bytime' or 'bymonth', duration= date default 365, cp = cpid
+  
+  csmsReportCP = async (req, res, next) => {
+
+    var cwjy = { action: 'cpHistory', chargePointId: req.query.cp, startDate: req.query.startDate, endDate: req.query.endDate };
+    var result = await connDBServer2.sendAndReceive(cwjy);
+    var returnValue = [{ cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 },
+                       { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 },
+                       { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }];
+    switch (req.query.type) {
+      case 'bytime':
+        for (var i in result) {
+          returnValue[Math.floor(Number(result[i].time) / 2)].cost += result[i].cost;
+          returnValue[Math.floor(Number(result[i].time) / 2)].kWh += result[i].totalkWh;
+        }
+        break;
+      case 'bymonth':
+        for (var i in result) {
+          returnValue[Number(result[i].month)].cost += result[i].cost;
+          returnValue[Number(result[i].month)].kWh += result[i].totalkWh;
+        }
+        break;
+    }
+    console.log(returnValue);
+    res.response = { responseCode: { type: 'page', name: 'report by time', result: returnValue}}
     next();
   }
 
@@ -554,6 +582,7 @@ function APIController(server) {
     csmsListEVSE,
     csmsHistoryCP,
     csmsHistoryEVSE,
+    csmsReportCP,
     writeResponse
   }
 
