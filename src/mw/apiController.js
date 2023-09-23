@@ -489,16 +489,43 @@ function APIController(server) {
           returnValue[Math.floor(Number(result[i].time) / 2)].cost += result[i].cost;
           returnValue[Math.floor(Number(result[i].time) / 2)].kWh += result[i].totalkWh;
         }
+        res.response = { responseCode: { type: 'page', name: 'report by time', result: returnValue } }
         break;
       case 'bymonth':
         for (var i in result) {
           returnValue[Number(result[i].month)].cost += result[i].cost;
           returnValue[Number(result[i].month)].kWh += result[i].totalkWh;
         }
+        res.response = { responseCode: { type: 'page', name: 'report by month', result: returnValue } }
         break;
     }
     console.log(returnValue);
-    res.response = { responseCode: { type: 'page', name: 'report by time', result: returnValue}}
+    next();
+  }
+  csmsReportUser = async (req, res, next) => {
+
+    var cwjy = { action: 'UserHistory', userId: req.query.user, startDate: req.query.startDate, endDate: req.query.endDate };
+    var result = await connDBServer2.sendAndReceive(cwjy);
+    var returnValue = [{ cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 },
+                       { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 },
+                       { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }];
+    switch (req.query.type) {
+      case 'bytime':
+        for (var i in result) {
+          returnValue[Math.floor(Number(result[i].time) / 2)].cost += result[i].cost;
+          returnValue[Math.floor(Number(result[i].time) / 2)].kWh += result[i].totalkWh;
+        }
+        res.response = { responseCode: { type: 'page', name: 'report by time', result: returnValue } }
+        break;
+      case 'bymonth':
+        for (var i in result) {
+          returnValue[Number(result[i].month)].cost += result[i].cost;
+          returnValue[Number(result[i].month)].kWh += result[i].totalkWh;
+        }
+        res.response = { responseCode: { type: 'page', name: 'report by month', result: returnValue } }
+        break;
+    }
+    console.log(returnValue);
     next();
   }
 
@@ -583,6 +610,7 @@ function APIController(server) {
     csmsHistoryCP,
     csmsHistoryEVSE,
     csmsReportCP,
+    csmsReportUser,
     writeResponse
   }
 
