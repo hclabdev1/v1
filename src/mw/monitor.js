@@ -42,12 +42,14 @@ function DBMonitor(dbms) {
              WHERE lastHeartBeat < DATE_SUB(NOW(), INTERVAL ${constants.SQL_HEARTBEAT_LIMIT} MINUTE)` ;
     result = await dbConnector.submitSync(query);
     for (var i in result) {
-      // status change to faulted?
+      /* temporarily
       query = `UPDATE evse SET status = ? WHERE evseSerial = ?;
                INSERT INTO issues (evseSerial, time, errorCode) VALUES (?, CURRENT_TIMESTAMP, ?);`;
       values = ['Unavailable', result[i].evseSerial, result[i].evseSerial, 'No Heartbeat'];
+      */
+      query = `UPDATE evse SET status = ? WHERE evseSerial = ?`;
+      values = ['Unavailable', result[i].evseSerial];
       dbConnector.submit(query, values);
-      //console.log(`watch: ${JSON.stringify(result[i])} is now unavailable`);
       if(result[i].status == 'Charging') {
         query = `SELECT trxid, userId, meterNow FROM bill WHERE evseSerial = '${result[i].evseSerial}' ORDER BY trxid DESC LIMIT 1`;
         r2 = await dbConnector.submitSync(query, []);
@@ -94,22 +96,18 @@ function DBMonitor(dbms) {
         sendPushNotification(msg);
       }
       else {
-        console.log(`${Date.now().toLocaleString} :: no endPoint for ${resule[i].recipientId}`);
+        console.log(`${Date.now().toLocaleString} :: no endPoint for ${result[i].recipientId}`);
       }
-      // send notification
-      // send notification
-      // send notification
     };
 
   };
 
-  // currently not used. connect to dbms directly from here via dbConnector
 
   function sendPushNotification (message) {
     admin.messaging()
          .send(message)
          .then((response) => {
-          console.log(`${new Date().toLocaleString()} push sent: ${JSON.stringify(response)}`);
+          console.log(`${new Date().toLocaleString()} push sent: ${response}`);
          })
          .catch((err) => {
           console.log(`${new Date().toLocaleString()} :: ${err}`);
