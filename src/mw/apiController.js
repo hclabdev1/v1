@@ -504,7 +504,7 @@ function APIController(server) {
   }
   csmsReportUser = async (req, res, next) => {
 
-    var cwjy = { action: 'UserHistory', userId: req.query.user, startDate: req.query.startDate, endDate: req.query.endDate };
+    var cwjy = { action: 'UserHistory', user: req.query.user, startDate: req.query.startDate, endDate: req.query.endDate };
     var result = await connDBServer2.sendAndReceive(cwjy);
     var returnValue = [{ cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 },
                        { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 },

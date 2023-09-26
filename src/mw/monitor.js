@@ -68,23 +68,27 @@ function DBMonitor(dbms) {
     result = await dbConnector.submitSync(query);
 
     for (var i in result) {
+      var msg, noti;
       switch (result[i].type) {
         case 'Angry':
           expiryAfter = constants.SQL_ANGRY_EXPIRY;
           query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
                    WHERE recipientId = ? AND senderId = ?`;
           values = [constants.SQL_ANGRY_EXPIRY, result[i].recipientId, result[i].senderId];
+          noti = { title: 'angry', body: 'you have to move your car'};
           break;
         case 'Finishing':
           query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
                    WHERE recipientId = ? AND evseSerial = ?`;
           values = [constants.SQL_FINISHING_EXPIRY, result[i].recipientId, result[i].evseSerial];
+          noti = { title: 'finishing', body: 'you have to move your car'};
           break;
         case 'Waiting':
           expiryAfter = constants.SQL_WAITING_EXPIRY;
           query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
                    WHERE recipientId = ? AND evseSerial = ?`;
           values = [constants.SQL_WAITING_EXPIRY, result[i].recipientId, result[i].evseSerial];
+          noti = { title: 'waiting', body: 'you have to move your car'};
           break;
       }
       dbConnector.submit(query, values);
@@ -92,7 +96,7 @@ function DBMonitor(dbms) {
       values = [result[i].recipientId];
       r2 = await dbConnector.submitSync(query, values);
       if(r2) {
-        msg = { data: { title: 'test title', body: 'body body', }, token: r2[0].endPoint, };
+        msg = { notification: noti, token: r2[0].endPoint, };
         sendPushNotification(msg);
       }
       else {

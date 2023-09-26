@@ -23,6 +23,13 @@ function DBController (dbms) {
         returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'UserHistory':
+        query = `SELECT userId FROM user WHERE email = ?`;
+        values = [cwjy.user];
+        var user = await dbConnector.submitSync(query, values);
+        if(!user) {
+          break;
+        }
+
         query = `SELECT DATE_FORMAT(finished, '%Y-%m-%d %H:%i:%s') AS finished, 
                         DATE_FORMAT(finished, '%m') AS month,
                         DATE_FORMAT(finished, '%H') AS time,
@@ -30,7 +37,7 @@ function DBController (dbms) {
                  FROM viewbillplus 
                  WHERE userId = ? AND finished >= ? AND finished <= ?`;
         //var date = new Date(Date.now() - cwjy.date * 24 * 60 * 60 * 1000).toISOString().substring(0,10);
-        values = [cwjy.userId, cwjy.startDate, cwjy.endDate];
+        values = [user[0].userId, cwjy.startDate, cwjy.endDate];
         returnValue = await dbConnector.submitSync(query, values);
         break;
       case 'cpHistory':
