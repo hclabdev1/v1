@@ -27,8 +27,6 @@ function AuthController () {
 
   sendAuthMail = async (req, res, next) => {
 
-    // TODO
-    // check if the email is registered already
     var cwjy = { action: "AuthStatus", email: req.params.email };
     var result = await connDBServer.sendAndReceive(cwjy);
     if (result) {
@@ -55,7 +53,12 @@ function AuthController () {
                  <META HTTP-EQUIV="Expires" CONTENT="0">
                 </HEAD>
                 <BODY> 
-                 <A HREF = "${serviceUrl}/authentication/email/${authItem.code}"> Click here </A>
+                 <A HREF = "${serviceUrl}/authentication/email/${authItem.code}" onclick="closetab()"> Click here </A>
+                <script>
+                  function closetab() {
+                    window.close();
+                  }
+                  </script>
                 </BODY>
                </HTML>`
     }).catch(console.error);
@@ -110,10 +113,14 @@ function AuthController () {
     if(index >= 0 && authList[index].exp > Date.now() && authList[index].status == 1) {
       connDBServer.sendOnly({ action: "EmailAuth", email: authList[index].email} );
       authList[index].status = 2;
-      res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Success'}] };
+      //res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Success'}] };
+      res.response = "verification success";
+      req.query = 2;
     } else {
       console.log('verification failed');
-      res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Failed' }] };
+      //res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Failed' }] };
+      res.response = "verification failed";
+      req.query = 2;
     }
 
     console.log(res.response);

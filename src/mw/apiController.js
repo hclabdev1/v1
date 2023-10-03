@@ -529,17 +529,18 @@ function APIController(server) {
     next();
   }
 
-
-  
-
   writeResponse = (req, res) => {
     waitingJobs--;
-    if (req.query.html || req.body.html) {
+    if (req.query.html == 1 || req.body.html == 1) {
       var html = json2html.render(res.response);
       res.write(html);
     }
-    else
+    else if (req.query.html == 2) {
+      res.write(res.response);
+    }
+    else {
       res.json(res.response);
+    }
 
     res.end();
   }

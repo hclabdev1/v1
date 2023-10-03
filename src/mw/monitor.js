@@ -75,7 +75,7 @@ function DBMonitor(dbms) {
           query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
                    WHERE recipientId = ? AND senderId = ?`;
           values = [constants.SQL_ANGRY_EXPIRY, result[i].recipientId, result[i].senderId];
-          noti = { title: 'angry', body: 'you have to move your car'};
+          noti = { title: '주차이동요처', body: ''};
           break;
         case 'Finishing':
           query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
