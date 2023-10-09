@@ -114,12 +114,12 @@ function AuthController () {
       connDBServer.sendOnly({ action: "EmailAuth", email: authList[index].email} );
       authList[index].status = 2;
       //res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Success'}] };
-      res.response = "verification success";
+      res.response = "인증 완료";
       req.query = 2;
     } else {
       console.log('verification failed');
       //res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Failed' }] };
-      res.response = "verification failed";
+      res.response = "인증 실패";
       req.query = 2;
     }
 
@@ -204,6 +204,12 @@ function AuthController () {
 
     next();
   }
+  carInfo = (req, res, next) => {
+    var cwjy = { action: 'CarInfo', email: req.params.email, name: req.body.name, weight: req.body.weight };
+    connDBServer.sendOnly(cwjy);
+    res.response = { responseCode: { type: 'page', name: 'welcome' }, result: [] };
+    next();
+  }
 
   test = (req, res, next) => {
     var authorization = req.headers['authorization'];
@@ -220,6 +226,7 @@ function AuthController () {
     next();
   }
   const auth = {
+    carInfo,
     test,
     sendAuthMail,
     emailAuthStatus,

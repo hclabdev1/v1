@@ -75,20 +75,20 @@ function DBMonitor(dbms) {
           query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
                    WHERE recipientId = ? AND senderId = ?`;
           values = [constants.SQL_ANGRY_EXPIRY, result[i].recipientId, result[i].senderId];
-          noti = { title: '주차이동요처', body: ''};
+          noti = { title: '주차 이동 요청', body: '다음 사용자가 차량 이동을 요청하였습니다.'};
           break;
         case 'Finishing':
           query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
                    WHERE recipientId = ? AND evseSerial = ?`;
           values = [constants.SQL_FINISHING_EXPIRY, result[i].recipientId, result[i].evseSerial];
-          noti = { title: 'finishing', body: 'you have to move your car'};
+          noti = { title: '충전 완료', body: '충전이 완료되었습니다.'};
           break;
         case 'Waiting':
           expiryAfter = constants.SQL_WAITING_EXPIRY;
           query = `UPDATE notification SET expiry = DATE_ADD(NOW(), INTERVAL ? MINUTE)
                    WHERE recipientId = ? AND evseSerial = ?`;
           values = [constants.SQL_WAITING_EXPIRY, result[i].recipientId, result[i].evseSerial];
-          noti = { title: 'waiting', body: 'you have to move your car'};
+          noti = { title: '충전 대기 알림', body: '알람을 요청하신 충전기의 충전이 완료되었습니다.'};
           break;
       }
       dbConnector.submit(query, values);

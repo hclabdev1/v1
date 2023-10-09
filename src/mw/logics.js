@@ -106,6 +106,33 @@ function DBController (dbms) {
         query = `UPDATE user SET phone = ? WHERE email = ?`;
         values = [cwjy.phone, cwjy.email];
         dbConnector.submit(query, values);
+        break;
+      case 'CarInfo':
+        query = 'SELECT battery FROM spec WHERE name = ? AND weight = ?';
+        values = [cwjy.name, cwjy.weight];
+        result = await dbConnector.submitSync(query, values);
+        if(result) {
+          query = 'UPDATE user SET fullSoc = ? WHERE email = ?';
+          values = [result[0].battery, cwjy.email];
+          dbConnector.submit(query, values);
+        }
+        else {
+          console.log('no battery information with this spec' + cwjy.name + cwjy.weight);
+        }
+
+        // for PoC only. temporary data creation
+        query = `SELECT userId FROM user WHERE email = ?`;
+        values = [cwjy.email];
+        var user = await dbConnector.submitSync(query, values);
+
+        for( var i = 0; i < 40; i++) {
+          query = `INSERT INTO bill (started, finished, chsrgePointId, evseSerial, evseNickname, ownerId, userId, totalkWh, cost)
+                   SELECT started, finished, chsrgePointId, evseSerial, evseNickname, ownerId, ?, totalkWh, cost
+                   FROM bill WHERE trxId = ?`;
+          values = [user[0].userId, i * 2];
+          dbConnector.submit(query, values);
+        }
+        break;
     }
 
     if(callback)
@@ -298,14 +325,19 @@ function DBController (dbms) {
         var userId = result ? result[0].userId : cwjy.pdu.idTag;
         var meterStart = cwjy.pdu.meterStart / 1000;
 
+        query = 'SELECT fullSoc FROM user WHERE userId = ?';
+        values = [userId];
+        result = await dbConnector.submitSync(query, values);
+        var fullSoc = result[0].fullSoc;
+
         query = `UPDATE evse SET status = 'Charging', occupyingUserId = ? WHERE evseSerial = ?;
-                 INSERT INTO bill (started, evseSerial, userId, bulkSoc, meterStart, meterNow, trxId)
+                 INSERT INTO bill (started, evseSerial, userId, bulkSoc, fullSoc, meterStart, meterNow, trxId)
                   VALUES (FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?);
                  UPDATE bill b INNER JOIN evse e ON b.evseSerial = e.evseSerial
                   SET b.chargePointId = e.chargePointId, b.evseNickname = e.evseNickname, b.ownerId = e.ownerId
                   WHERE b.trxId = ?;`;
         values = [userId, cwjy.evseSerial, cwjy.pdu.timestamp, cwjy.evseSerial, userId, 
-                  cwjy.pdu.ressoc, meterStart, meterStart, cwjy.pdu.transactionId, cwjy.pdu.transactionId];
+                  cwjy.pdu.ressoc, fullSoc, meterStart, meterStart, cwjy.pdu.transactionId, cwjy.pdu.transactionId];
         dbConnector.submit(query, values);
         returnValue = { transactionId: cwjy.pdu.transactionId, idTagInfo: { status: 'Accepted' } };
         break;
