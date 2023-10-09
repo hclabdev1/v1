@@ -56,10 +56,10 @@ var V1RouterWrapper = function (server) {
 
   //
 
-  //router.put('/hscan/scan', controller.waitAndGo, controller.hScan, controller.writeResponse);
-  //router.put('/hscan/action', controller.waitAndGo, controller.hAction, controller.writeResponse);
-  router.put('/hscan/scan', auth.verify, controller.waitAndGo, controller.hScan, controller.writeResponse);
-  router.put('/hscan/action', auth.verify, controller.waitAndGo, controller.hAction, controller.writeResponse);
+  router.put('/hscan/scan', controller.waitAndGo, controller.hScan, controller.writeResponse);
+  router.put('/hscan/action', controller.waitAndGo, controller.hAction, controller.writeResponse);
+  //router.put('/hscan/scan', auth.verify, controller.waitAndGo, controller.hScan, controller.writeResponse);
+  //router.put('/hscan/action', auth.verify, controller.waitAndGo, controller.hAction, controller.writeResponse);
 
   //router.post('/hscan/report/:evse', controller.postDamageReport, controller.writeResponse);
   //router.post('/hscan/report/:evse', upload.array('photos', 5), controller.postDamageReport, controller.writeResponse);
