@@ -238,11 +238,6 @@ function APIController(server) {
     result[0].price = Math.ceil((result[0].priceHCL + result[0].priceHost) * (result[0].meterNow - result[0].meterStart));
     avgKW = (result[0].meterNow - result[0].meterStart) / elapsed * 3600;
 
-    /*
-    if (result[0].meterNow - result[0].meterStart > 5) {
-      capa = (result[0].meterNow - result[0].meterStart) / (result[0].currentSoc - result[0].bulkSoc) * 100;
-    }
-    */
     result[0].avgKW = Math.round(avgKW * 100) / 100;
 
     if (result[0].fullSoc == 0) {
