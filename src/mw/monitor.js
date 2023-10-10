@@ -100,7 +100,7 @@ function DBMonitor(dbms) {
         sendPushNotification(msg);
       }
       else {
-        console.log(`${Date.now().toLocaleString} :: no endPoint for ${result[i].recipientId}`);
+        console.log(`${Date.now().toLocaleString()} :: no endPoint for ${result[i].recipientId}`);
       }
     };
 
