@@ -99,8 +99,8 @@ function DBMonitor(dbms) {
         msg = { notification: noti, token: r2[0].endPoint, };
         sendPushNotification(msg);
       }
-      else {
-        console.log(`${Date.now().toLocaleString()} :: no endPoint for ${result[i].recipientId}`);
+      else if(result[i].recipientId) {
+        console.log(`${new Date().toLocaleString()} :: no endPoint for ${result[i].recipientId}`);
       }
     };
 

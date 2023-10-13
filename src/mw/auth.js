@@ -7,6 +7,8 @@ const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const uaparser = require('ua-parser-js');
 
+const http = require('http');
+
 function AuthController () {
   var pk = service.privatekey;
   var authList = [];
@@ -205,8 +207,19 @@ function AuthController () {
     next();
   }
   carInfo = (req, res, next) => {
-    var cwjy = { action: 'CarInfo', email: req.params.email, name: req.body.name, weight: req.body.weight };
-    connDBServer.sendOnly(cwjy);
+    var options = { hostname: '211.236.84.211',
+                    port: 8181,
+                    path: `/tsOpenAPI/minGamInfoService/getMinGamInfo?vhcleNo=${req.params.carNo}&svcCode=${svcCOde}&insttCode=${insttCode}`,
+                    method: 'GET' };
+    const request = http.request(options, (res) => {
+      var name = res.name, weight = res.weight;
+      var cwjy = { action: 'CarInfo', email: req.params.email, name: name, weight: weight };
+      connDBServer.sendOnly(cwjy);
+
+    }).on('error', (err) => {
+      console.log('error:' + err);
+    }).end();
+
     res.response = { responseCode: { type: 'page', name: 'welcome' }, result: [] };
     next();
   }

@@ -9,8 +9,10 @@ const app = express();
 const https = require('https');
 const fs = require('fs');
 
-var key = fs.readFileSync(__dirname + '/selfsigned.key');
-var cert = fs.readFileSync(__dirname + '/selfsigned.crt');
+//var key = fs.readFileSync(__dirname + '/selfsigned.key');
+//var cert = fs.readFileSync(__dirname + '/selfsigned.crt');
+var key = fs.readFileSync(__dirname + '/privkey.pem');
+var cert = fs.readFileSync(__dirname + '/fullchain.pem');
 const server = https.createServer({key:key, cert: cert}, app);
 
 
@@ -25,9 +27,10 @@ app.use('/v1', v1Router);
 const app2 = express();
 const http2 = require('http');
 const landingsvr = http2.createServer(app2);
-app2.use(express.static('/home/leo/zeroone'));
+var basedir = process.platform == 'linux' ? '/home/leo' : '/Users/leo';
+app2.use(express.static(basedir + '/zeroone'));
 app2.get('/:id', (req, res) => {
-  res.sendFile('/home/leo/zeroone/index.html');
+  res.sendFile(basedir + '/zeroone/index.html');
 });
 landingsvr.listen(3004, () => {
   console.log('landing server opened');
