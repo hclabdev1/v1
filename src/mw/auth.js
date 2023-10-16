@@ -209,7 +209,7 @@ function AuthController () {
   carInfo = (req, res, next) => {
     var options = { hostname: '211.236.84.211',
                     port: 8181,
-                    path: `/tsOpenAPI/minGamInfoService/getMinGamInfo?vhcleNo=${req.params.carNo}&svcCode=${svcCOde}&insttCode=${insttCode}`,
+                    path: `/tsOpenAPI/minGamInfoService/getMinGamInfo?vhcleNo=${req.params.carNo}&svcCode=${svcCode}&insttCode=${insttCode}`,
                     method: 'GET' };
     const request = http.request(options, (res) => {
       var name = res.name, weight = res.weight;
