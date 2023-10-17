@@ -47,6 +47,7 @@ function DBMonitor(dbms) {
                INSERT INTO issues (evseSerial, time, errorCode) VALUES (?, CURRENT_TIMESTAMP, ?);`;
       values = ['Unavailable', result[i].evseSerial, result[i].evseSerial, 'No Heartbeat'];
       */
+      /* disabled for PoC
       query = `UPDATE evse SET status = ? WHERE evseSerial = ?`;
       values = ['Unavailable', result[i].evseSerial];
       dbConnector.submit(query, values);
@@ -58,6 +59,7 @@ function DBMonitor(dbms) {
                   timestamp: Math.floor(Date.now()/1000)}};
         connDBServer.sendOnly(cwjy);
       }
+      */
     }
 
 

@@ -6,6 +6,7 @@ process.env.SUPPRESS_NO_CONFIG_WARNING = 'y';
 
 const express = require('express');
 const app = express();
+const cors = require('cors');
 const https = require('https');
 const fs = require('fs');
 
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: false}));
 
 // Router for mobile app API
 const v1Router = require('../mw/v1Router')(server);
+app.use(cors());
 app.use('/v1', v1Router);
 
 // for landing page for landing page for landing page for landing page for landing page
