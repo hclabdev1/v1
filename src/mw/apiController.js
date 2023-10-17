@@ -231,32 +231,36 @@ function APIController(server) {
     var cwjy = { action: "ChargingStatus", userId: req.params.user};
     var result = await connDBServer.sendAndReceive(cwjy);
     var remaining, elapsed, avgKW, capa;
+    if (result) {
+      elapsed = Math.floor((new Date(Date.now()) - new Date(result[0].started)) / 1000);
+      result[0].elapsed = Math.floor(elapsed / 3600) + ":" + Math.floor((elapsed % 3600) / 60) + ":" + elapsed % 60;
 
-    elapsed = Math.floor((new Date(Date.now()) - new Date(result[0].started)) / 1000);
-    result[0].elapsed = Math.floor(elapsed / 3600) + ":" + Math.floor((elapsed % 3600) / 60) + ":" + elapsed % 60;
+      result[0].price = Math.ceil((result[0].priceHCL + result[0].priceHost) * (result[0].meterNow - result[0].meterStart));
+      avgKW = (result[0].meterNow - result[0].meterStart) / elapsed * 3600;
 
-    result[0].price = Math.ceil((result[0].priceHCL + result[0].priceHost) * (result[0].meterNow - result[0].meterStart));
-    avgKW = (result[0].meterNow - result[0].meterStart) / elapsed * 3600;
+      result[0].avgKW = Math.round(avgKW * 100) / 100;
 
-    result[0].avgKW = Math.round(avgKW * 100) / 100;
+      if (result[0].fullSoc == 0) {
+        result[0].currentSoc = result[0].bulkSoc;
+        result[0].remaining = 0;
+        result[0].estCost = 0;
+      }
+      else {
+        result[0].currentSoc = Math.round(result[0].bulkSoc + (result[0].meterNow - result[0].meterStart) / capa);
+        //remaining = (result[0].fullSoc - result[0].currentSoc) / avgKW;
+        result[0].remaining = Math.floor(remaining) + ':' + Math.floor(((remaining - Math.floor(remaining)) * 60));
+        result[0].estCost = Math.ceil(remaining * (result[0].priceHCL + result[0].priceHost));
+      }
 
-    if (result[0].fullSoc == 0) {
-      result[0].currentSoc = result[0].bulkSoc;
-      result[0].remaining = 0;
-      result[0].estCost = 0;
+      cwjy = { action: 'EVSEStatus', evseSerial: result[0].evseSerial };
+      var r2 = await connDBServer.sendAndReceive(cwjy);
+      res.response = { responseCode: { type: 'page', name: 'charging status' }, status: r2[0].status, result: result };
     }
     else {
-      result[0].currentSoc = Math.round(result[0].bulkSoc + (result[0].meterNow - result[0].meterStart) / capa);
-      //remaining = (result[0].fullSoc - result[0].currentSoc) / avgKW;
-      result[0].remaining = Math.floor(remaining) + ':' + Math.floor(((remaining - Math.floor(remaining)) * 60));
-      result[0].estCost = Math.ceil(remaining * (result[0].priceHCL + result[0].priceHost));
+      res.response = { responseCode: { type: 'page', name: 'charging status' }, status: 'Available', result: [] };
     }
 
-    cwjy = { action: 'EVSEStatus', evseSerial: result[0].evseSerial };
-    var r2 = await connDBServer.sendAndReceive(cwjy);
 
-
-    res.response = { responseCode: { type: 'page', name: 'charging status' }, status: r2[0].status, result: result};
     next();
   }
 

@@ -83,16 +83,17 @@ function AuthController () {
 
   signup = (req, res, next) => {
     // temporarily not checking auth status for test
-    //var index = authList.findIndex(i => i.code == req.params.code);
+    var index = authList.findIndex(i => i.code == req.params.code);
     //if(index >= 0 && authList[index].status == 2) {
+    if(index >= 0 ) {
       var cwjy = { action: "SignUp", email: req.body.email, password: req.body.password };
       connDBServer.sendOnly(cwjy);
       res.response = { responseCode: { type: 'page', name: 'signup' }, result: [{ status: 'Success' }] };
       next();
       authList.splice(index, 1);
       return;
-    //}
-    //res.response = { responseCode: { type: 'error', name: 'signup' }, result: [{ status: 'not authorized'}] };
+    }
+    res.response = { responseCode: { type: 'error', name: 'signup' }, result: [{ status: 'not authorized'}] };
   }
 
   // temporarily no auth. just storing

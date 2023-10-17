@@ -290,6 +290,10 @@ function DBController (dbms) {
           query = `SELECT meterStart FROM bill WHERE trxId = ?`;
           values = [cwjy.pdu.transactionId];
           result = await dbConnector.submitSync(query, values);
+          if(!result) {
+            returnValue = {};
+            break;
+          }
           if (result[0].meterStart == 0) {
             query = `UPDATE evse SET lastHeartbeat = FROM_UNIXTIME(?) WHERE evseSerial = ?;
                     UPDATE bill SET meterNow = ? WHERE trxId = ?;
