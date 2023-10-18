@@ -71,6 +71,7 @@ function AuthController () {
     */
 
     // temporary for PoC
+    var index = authList.findIndex(i => i.email == req.params.email);
     connDBServer.sendOnly({ action: "EmailAuth", email: authList[index].email });
     authList[index].status = 2;
     // temporary for PoC
