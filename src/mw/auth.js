@@ -45,6 +45,8 @@ function AuthController () {
 
     authList.push(authItem);
 
+    // temporary for PoC
+    /*
     var serviceUrl = (process.platform == 'linux') ? service.baseUrl : service.macUrl;
     let info = await transporter.sendMail({
         from: smtp.from, to: req.params.email,
@@ -65,7 +67,13 @@ function AuthController () {
                </HTML>`
     }).catch(console.error);
 
-    console.log('sent: ' + JSON.stringify(info));
+    console.log(new Date().toLocaleString() + 'sent: ' + JSON.stringify(info));
+    */
+
+    // temporary for PoC
+    connDBServer.sendOnly({ action: "EmailAuth", email: authList[index].email });
+    authList[index].status = 2;
+    // temporary for PoC
 
     res.response = { responseCode:  { type: 'page', name: 'waiting email verification' }, result: [] };
     next();
@@ -82,10 +90,8 @@ function AuthController () {
   }
 
   signup = (req, res, next) => {
-    // temporarily not checking auth status for test
     var index = authList.findIndex(i => i.code == req.params.code);
-    //if(index >= 0 && authList[index].status == 2) {
-    if(index >= 0 ) {
+    if(index >= 0 && authList[index].status == 2) {
       var cwjy = { action: "SignUp", email: req.body.email, password: req.body.password };
       connDBServer.sendOnly(cwjy);
       res.response = { responseCode: { type: 'page', name: 'signup' }, result: [{ status: 'Success' }] };
