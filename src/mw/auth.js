@@ -94,11 +94,7 @@ function AuthController () {
   }
 
   signup = (req, res, next) => {
-    var index = authList.findIndex(i => i.code == req.params.code);
-    if( index >= 0)
-      console.log(JSON.stringify(authList[index]));
-    else
-      console.log('no authList');
+    var index = authList.findIndex(i => i.email == req.body.email);
 
     if(index >= 0 && authList[index].status == 2) {
       var cwjy = { action: "SignUp", email: req.body.email, password: req.body.password };
