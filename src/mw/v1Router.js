@@ -17,7 +17,7 @@ var V1RouterWrapper = function (server) {
   router.post('/signup/basic', auth.signup, controller.writeResponse);
   router.post('/signup/phone', auth.sendAuthPhone, controller.writeResponse);
   router.get('/signup/status/phone/:phone', auth.phoneStatus, controller.writeResponse);
-  router.post('/signup/carspec/:email', auth.carInfo, controller.writeResponse);
+  router.post('/signup/carspec/:email/:carNo', auth.carInfo, controller.writeResponse);
 
   //router.get('/signup/carnumber', auth.carInfo, controller.writeResponse);
 

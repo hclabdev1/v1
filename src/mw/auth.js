@@ -9,6 +9,9 @@ const uaparser = require('ua-parser-js');
 
 const http = require('http');
 
+const { XMLParser, XMLBuilder, XMLValidator } = require('fast-xml-parser');
+const xmlp = new XMLParser();
+
 function AuthController () {
   var pk = service.privatekey;
   var authList = [];
@@ -92,6 +95,11 @@ function AuthController () {
 
   signup = (req, res, next) => {
     var index = authList.findIndex(i => i.code == req.params.code);
+    if( index >= 0)
+      console.log(JSON.stringify(authList[index]));
+    else
+      console.log('no authList');
+
     if(index >= 0 && authList[index].status == 2) {
       var cwjy = { action: "SignUp", email: req.body.email, password: req.body.password };
       connDBServer.sendOnly(cwjy);
@@ -101,6 +109,7 @@ function AuthController () {
       return;
     }
     res.response = { responseCode: { type: 'error', name: 'signup' }, result: [{ status: 'not authorized'}] };
+    next();
   }
 
   // temporarily no auth. just storing
@@ -172,8 +181,14 @@ function AuthController () {
     }
     var cwjy = { action: 'GetID', email: decode.email};
     var result = await connDBServer.sendAndReceive(cwjy);
-    res.response = { responseCode: { type: 'page', name: 'welcome' }, result: result[0].userId };
-    console.log('decoded: ' + JSON.stringify(decode));
+    if(result) {
+      res.response = { responseCode: { type: 'page', name: 'welcome' }, result: result[0].userId };
+      console.log('decoded: ' + JSON.stringify(decode));
+    }
+    else {
+      res.response = { responseCode: { type: 'error', name: 'no id' }, result: [] };
+      console.log('decoded: ' + JSON.stringify(decode));
+    }
     next();
 
   }
@@ -215,12 +230,15 @@ function AuthController () {
     next();
   }
   carInfo = (req, res, next) => {
+    var svcCode = '234234';
+    var insttCode = '34645457';
     var options = { hostname: '211.236.84.211',
                     port: 8181,
                     path: `/tsOpenAPI/minGamInfoService/getMinGamInfo?vhcleNo=${req.params.carNo}&svcCode=${svcCode}&insttCode=${insttCode}`,
                     method: 'GET' };
     const request = http.request(options, (res) => {
-      var name = res.name, weight = res.weight;
+      var car = xmlp.parse(res);
+      var name = car.name, weight = car.weight;
       var cwjy = { action: 'CarInfo', email: req.params.email, name: name, weight: weight };
       connDBServer.sendOnly(cwjy);
 
