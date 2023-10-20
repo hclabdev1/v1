@@ -172,6 +172,11 @@ function DBController (dbms) {
         values = [cwjy.userId];
         returnValue = await dbConnector.submitSync(query, values);
         break;
+      case 'GetCapa':
+        query = `SELECT capacity FROM evse WHERE evseSerial = ?`;
+        values = [cwjy.evseSerial];
+        returnValue = await dbConnector.submitSync(query, values);
+        break;
       case 'ChargingStatus':
         query = `SELECT DATE_FORMAT(started, '%Y-%m-%d %H:%i:%s') AS started,
                         DATE_FORMAT(finished, '%Y-%m-%d %H:%i:%s') AS finished,
@@ -318,9 +323,11 @@ function DBController (dbms) {
         break;
       case 'StartTransaction':
         cwjy.pdu.transactionId = trxCount++;
+        /*
         query = `SELECT capacity FROM evse WHERE evseSerial = ?`;
         values = [cwjy.evseSerial];
         result = await dbConnector.submitSync(query, values);
+        */
 
         query = `SELECT userId FROM user WHERE cardNumber = ?`;
         values = [cwjy.pdu.idTag];
@@ -334,14 +341,17 @@ function DBController (dbms) {
         result = await dbConnector.submitSync(query, values);
         var fullSoc = result[0].fullSoc;
 
-        query = `UPDATE evse SET status = 'Charging', occupyingUserId = ? WHERE evseSerial = ?;
-                 INSERT INTO bill (started, evseSerial, userId, bulkSoc, fullSoc, meterStart, meterNow, trxId)
-                  VALUES (FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?);
-                 UPDATE bill b INNER JOIN evse e ON b.evseSerial = e.evseSerial
+        query = `UPDATE evse SET status = 'Charging', occupyingUserId = ? WHERE evseSerial = ?`;
+        values = [userId, cwjy.evseSerial];
+        result = await dbConnector.submitSync(query, values);
+        query = `INSERT INTO bill (started, evseSerial, userId, bulkSoc, fullSoc, meterStart, meterNow, trxId)
+                  VALUES (FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?)`;
+        values = [cwjy.pdu.timestamp, cwjy.evseSerial, userId, cwjy.pdu.ressoc, fullSoc, meterStart, meterStart, cwjy.pdu.transactionId];
+        result = await dbConnector.submitSync(query, values);
+        query = `UPDATE bill b INNER JOIN evse e ON b.evseSerial = e.evseSerial
                   SET b.chargePointId = e.chargePointId, b.evseNickname = e.evseNickname, b.ownerId = e.ownerId
-                  WHERE b.trxId = ?;`;
-        values = [userId, cwjy.evseSerial, cwjy.pdu.timestamp, cwjy.evseSerial, userId, 
-                  cwjy.pdu.ressoc, fullSoc, meterStart, meterStart, cwjy.pdu.transactionId, cwjy.pdu.transactionId];
+                  WHERE b.trxId = ?`;
+        values = [cwjy.pdu.transactionId];
         dbConnector.submit(query, values);
         returnValue = { transactionId: cwjy.pdu.transactionId, idTagInfo: { status: 'Accepted' } };
         break;

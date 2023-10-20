@@ -237,6 +237,11 @@ function APIController(server) {
 
       result[0].price = Math.ceil((result[0].priceHCL + result[0].priceHost) * (result[0].meterNow - result[0].meterStart));
       avgKW = (result[0].meterNow - result[0].meterStart) / elapsed * 3600;
+      if(avgKW < 1) {
+        cwjy = { action: "GetCapa", evseSerial: result[0].evseSerial};
+        capa = await connDBServer.sendAndReceive(cwjy);
+        avgKW = capa[0].capacity;
+      }
 
       result[0].avgKW = Math.round(avgKW * 100) / 100;
 
@@ -246,8 +251,8 @@ function APIController(server) {
         result[0].estCost = 0;
       }
       else {
-        result[0].currentSoc = Math.round(result[0].bulkSoc + (result[0].meterNow - result[0].meterStart) / capa);
-        //remaining = (result[0].fullSoc - result[0].currentSoc) / avgKW;
+        result[0].currentSoc = Math.round(result[0].bulkSoc + (result[0].meterNow - result[0].meterStart) / avgKW);
+        remaining = (result[0].fullSoc - result[0].currentSoc) / avgKW;
         result[0].remaining = Math.floor(remaining) + ':' + Math.floor(((remaining - Math.floor(remaining)) * 60));
         result[0].estCost = Math.ceil(remaining * (result[0].priceHCL + result[0].priceHost));
       }
