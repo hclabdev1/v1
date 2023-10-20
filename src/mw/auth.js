@@ -232,10 +232,14 @@ function AuthController () {
                     port: 8181,
                     path: `/tsOpenAPI/minGamInfoService/getMinGamInfo?vhcleNo=${req.params.carNo}&svcCode=${svcCode}&insttCode=${insttCode}`,
                     method: 'GET' };
-    const request = http.request(options, (res) => {
-      var car = xmlp.parse(res);
-      var name = car.name, weight = car.weight;
-      var cwjy = { action: 'CarInfo', email: req.params.email, name: name, weight: weight };
+    const request = http.request(options, (resFrom365) => {
+      var car = xmlp.parse(resFrom365);
+      //var name = car.name, weight = car.weight;
+      //var cwjy = { action: 'CarInfo', email: req.params.email, name: name, weight: weight };
+      var cwjy = { action: 'CarInfo', email: req.params.email, 
+                    frwy: car.body.elctyFrwyFuelCnsmpRt,
+                    dwtw: car.body.elctyDwtWFuelCnsmpRt,
+                    cmpnd: car.body.elctyCmpndFuelCnsmpRt };
       connDBServer.sendOnly(cwjy);
 
     }).on('error', (err) => {
