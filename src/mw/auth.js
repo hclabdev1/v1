@@ -226,21 +226,29 @@ function AuthController () {
     next();
   }
   carInfo = (req, res, next) => {
-    var svcCode = '234234';
-    var insttCode = '34645457';
+    if(req.params.carNo == '0000') {
+      res.response = { responseCode: { type: 'page', name: 'welcome' }, result: [] };
+      next();
+      return;
+    }
+    var svcCode = '0022C540A7B1DA55F28E479FABFF7BBC';
+    var insttCode = '0022C540A79B38595E9AFB606843630E';
     var options = { hostname: '211.236.84.211',
                     port: 8181,
-                    path: `/tsOpenAPI/minGamInfoService/getMinGamInfo?vhcleNo=${req.params.carNo}&svcCode=${svcCode}&insttCode=${insttCode}`,
+                    path: `/tsOpenAPI/minGamInfoService/getMinGamInfo?vhcleNo=${encodeURI(req.params.carNo)}&svcCode=${svcCode}&insttCode=${insttCode}`,
                     method: 'GET' };
     const request = http.request(options, (resFrom365) => {
-      var car = xmlp.parse(resFrom365);
-      //var name = car.name, weight = car.weight;
-      //var cwjy = { action: 'CarInfo', email: req.params.email, name: name, weight: weight };
-      var cwjy = { action: 'CarInfo', email: req.params.email, 
-                    frwy: car.body.elctyFrwyFuelCnsmpRt,
-                    dwtw: car.body.elctyDwtWFuelCnsmpRt,
-                    cmpnd: car.body.elctyCmpndFuelCnsmpRt };
-      connDBServer.sendOnly(cwjy);
+      resFrom365.setEncoding('utf8');
+      resFrom365.on('data', (rr) => {
+        var car = xmlp.parse(rr);
+        var cwjy = {
+          action: 'CarInfo', email: req.params.email,
+          frwy: car.body.elctyFrwyFuelCnsmpRt,
+          dwtw: car.body.elctyDwtWFuelCnsmpRt,
+          cmpnd: car.body.elctyCmpndFuelCnsmpRt
+        };
+        connDBServer.sendOnly(cwjy);
+      });
 
     }).on('error', (err) => {
       console.log('error:' + err);
