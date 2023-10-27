@@ -245,7 +245,8 @@ function AuthController () {
           action: 'CarInfo', email: req.params.email,
           frwy: car.body.elctyFrwyFuelCnsmpRt,
           dwtw: car.body.elctyDwtWFuelCnsmpRt,
-          cmpnd: car.body.elctyCmpndFuelCnsmpRt
+          cmpnd: car.body.elctyCmpndFuelCnsmpRt,
+          weight: car.body.vhcleWt
         };
         connDBServer.sendOnly(cwjy);
       });
