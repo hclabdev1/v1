@@ -241,14 +241,26 @@ function AuthController () {
       resFrom365.setEncoding('utf8');
       resFrom365.on('data', (rr) => {
         var car = xmlp.parse(rr);
-        var cwjy = {
-          action: 'CarInfo', email: req.params.email,
-          frwy: car.body.elctyFrwyFuelCnsmpRt,
-          dwtw: car.body.elctyDwtWFuelCnsmpRt,
-          cmpnd: car.body.elctyCmpndFuelCnsmpRt,
-          weight: car.body.vhcleWt
-        };
-        connDBServer.sendOnly(cwjy);
+        try {
+          var cwjy = {
+            action: 'CarInfo', email: req.params.email,
+            frwy: car.body.elctyFrwyFuelCnsmpRt,
+            dwtw: car.body.elctyDwtWFuelCnsmpRt,
+            cmpnd: car.body.elctyCmpndFuelCnsmpRt,
+            weight: car.body.vhcleWt
+          };
+          connDBServer.sendOnly(cwjy);
+        } catch (e) {
+          var cwjy = {
+            action: 'CarInfo', email: req.params.email,
+            frwy: 0,
+            dwtw: 0,
+            cmpnd: 0,
+            weight: 0
+          };
+          connDBServer.sendOnly(cwjy);
+          console.log('no proper info');
+        }
       });
 
     }).on('error', (err) => {
