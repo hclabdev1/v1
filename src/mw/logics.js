@@ -129,8 +129,8 @@ function DBController (dbms) {
         var user = await dbConnector.submitSync(query, values);
 
         for( var i = 0; i < 40; i++) {
-          query = `INSERT INTO bill (started, finished, chsrgePointId, evseSerial, evseNickname, ownerId, userId, totalkWh, cost)
-                   SELECT started, finished, chsrgePointId, evseSerial, evseNickname, ownerId, ?, totalkWh, cost
+          query = `INSERT INTO bill (started, finished, chargePointId, evseSerial, evseNickname, ownerId, userId, totalkWh, cost)
+                   SELECT started, finished, chargePointId, evseSerial, evseNickname, ownerId, ?, totalkWh, cost
                    FROM bill WHERE trxId = ?`;
           values = [user[0].userId, i * 2];
           dbConnector.submit(query, values);
