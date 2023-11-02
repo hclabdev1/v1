@@ -448,7 +448,7 @@ function APIController(server) {
     }
 
     var cwjy = { action: 'ShowAllEVSE', chargePointId: req.query.cp };
-    var result = await connDBServer2.sendAndReceive(cwjy);
+    var result = await connDBServer.sendAndReceive(cwjy);
     res.response = { responseCode: { type: 'page', name: 'EVSE list' }, result: result};
     next();
   }

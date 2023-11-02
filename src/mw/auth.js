@@ -239,11 +239,11 @@ function AuthController () {
                     port: 8181,
                     path: `/tsOpenAPI/minGamInfoService/getMinGamInfo?vhcleNo=${encodeURI(req.params.carNo)}&svcCode=${svcCode}&insttCode=${insttCode}`,
                     method: 'GET' };
-    console.log(new Date().toLocaleString() + '  car info: ' + options.path);
     const request = http.request(options, (resFrom365) => {
       resFrom365.setEncoding('utf8');
       resFrom365.on('data', (rr) => {
         var car = xmlp.parse(rr);
+        console.log('car info:' + JSON.stringify(car));
         try {
           var cwjy = {
             action: 'CarInfo', email: req.params.email,
