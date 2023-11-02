@@ -132,7 +132,7 @@ function AuthController () {
       res.response = "인증 완료";
       req.query = 2;
     } else {
-      console.log('verification failed');
+      console.log(new Date().toLocaleString() + ' . verification failed');
       //res.response = { responseCode: { type: 'page', name: 'verification' }, result: [{status: 'Failed' }] };
       res.response = "인증 실패";
       req.query = 2;
@@ -162,7 +162,7 @@ function AuthController () {
 
   autoLogin = async (req, res, next) => {
 
-    console.log('autologin with: ' + JSON.stringify(req.body));
+    console.log(new Date().toLocaleString() + '  autologin with: ' + JSON.stringify(req.body));
     var token = String(req.headers['authorization']).split(' ');
     if (token[0] != 'Bearer') {
       console.log('No Bear.');
@@ -208,14 +208,14 @@ function AuthController () {
 
     var token = String(req.headers['authorization']).split(' ');
     if (token[0] != 'Bearer') {
-      console.log('No Bear.');
+      console.log(new Date().toLocaleString() + ' No Bear.');
       res.json({ responseCode: { type: 'error', name: 'wrong token'}, result: ['I hope you follow RFC recommendations. I dont want it either tho']});
       return;
     }
     try {
       var decode = jwt.verify(token[1], pk);
     } catch (e) {
-      console.log('verification failed: ' + e);
+      console.log(new Date().toLocaleString() + '  verification failed: ' + e);
       res.json({ responseCode: { type: 'error re-login', name: 'wrong token'}, result: [] });
       return;
     }
@@ -238,6 +238,7 @@ function AuthController () {
                     port: 8181,
                     path: `/tsOpenAPI/minGamInfoService/getMinGamInfo?vhcleNo=${encodeURI(req.params.carNo)}&svcCode=${svcCode}&insttCode=${insttCode}`,
                     method: 'GET' };
+    console.log(new Date().toLocaleString() + '  car info: ' + options.path);
     const request = http.request(options, (resFrom365) => {
       resFrom365.setEncoding('utf8');
       resFrom365.on('data', (rr) => {

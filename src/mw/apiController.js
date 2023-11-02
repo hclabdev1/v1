@@ -25,7 +25,7 @@ function APIController(server) {
     waitingJobs++;
     var reqToCP, resultCP;
     var cwjy = { action: "EVSECheck", userId: req.body.user, evseNickname: req.body.evse};
-    console.log('req.body: ' + JSON.stringify(req.body));
+    console.log(new Date().toLocaleString() + 'req.body: ' + JSON.stringify(req.body));
     var resultDB = await connDBServer.sendAndReceive(cwjy);
     if(!resultDB || !req.body.user) {
       console.warn('result is null');
@@ -379,7 +379,7 @@ function APIController(server) {
     var conf = { messageType: 3, uuid: req.uuid, pdu: {} };
     conf.pdu = await connDBServer.sendAndReceive(req);
     if (conf.pdu.status !== 'Accepted') {
-      console.log(`This EVSE(${origin}) is not authorized.`);
+      console.log(`${new Date().toLocaleString()} This EVSE(${origin}) is not authorized.`);
       connCP.removeConnection(origin);
       return;
     }
