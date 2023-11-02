@@ -147,8 +147,9 @@ function AuthController () {
     var cwjy = { action: 'Login', email: req.body.email, password: req.body.password};
     var result = await connDBServer.sendAndReceive(cwjy);
     //var token = jwt.sign({ email: req.body.email, exp: Math.floor(Date.now()/1000 + 3600 * 24 * 30) }, pk, { algorithm: 'HS256'});
-    var token = jwt.sign({ userId: result[0].userId}, pk, { algorithm: 'HS256' });
+    var token;
     if(result) {
+      token = jwt.sign({ userId: result[0].userId }, pk, { algorithm: 'HS256' });
       var ua = uaparser(req.headers['user-agent']);
       cwjy = { action: 'PostLogin', email: req.body.email, fcmToken: req.body.fcmToken, loggedIn: ua.ua};
       connDBServer.sendOnly(cwjy);
