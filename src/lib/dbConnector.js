@@ -23,7 +23,7 @@ function DBConnector(dbms) {
       console.debug(`${new Date().toLocaleString()} query submitted \n ${query} \n values:${values}`);
     myPool.query(query, values, (err, res) => {
       if(err) {
-        console.error(new Date().toLocaleString() + ': dbConnector:submit: ' + err);
+        console.error(`${new Date().toLocaleString()} :: dbConnector:submit: ${query} :: ${err}`);
       }
     });
   }
@@ -38,7 +38,7 @@ function DBConnector(dbms) {
         console.debug(`${new Date().toLocaleString()} query submitted \n ${query} \n values:${values}`);
       myPool.query(query, values, (err, res) => {
         if (err) {
-          console.error(new Date().toLocaleString() + ' : dbConnector:submitSync: ' + err);
+          console.error(`${new Date().toLocaleString()} :: dbConnector:submitSync: ${query} :: ${err}`);
           resolve(null);
           return;
         }
