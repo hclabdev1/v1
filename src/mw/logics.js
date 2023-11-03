@@ -101,9 +101,12 @@ function DBController (dbms) {
         result = await dbConnector.submitSync(query, values);
         returnValue = result;
       case 'EmailAuth':
-        query = `INSERT INTO user (email, created, authStatus)
-                  VALUES ( ?, CURRENT_TIMESTAMP, 'Accepted')`;
-        values = [cwjy.email];
+        query = 'SELECT MAX(userId) as max FROM user';
+        var resultmax = dbConnector.submitSync(query, null);
+
+        query = `INSERT INTO user (userId, email, created, authStatus)
+                  VALUES ( ?, ?, CURRENT_TIMESTAMP, 'Accepted')`;
+        values = [resultmax[0].max + 1, cwjy.email];
         dbConnector.submit(query, values);
         break;
       case 'RegisterPhone':
