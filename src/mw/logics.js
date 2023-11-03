@@ -89,9 +89,7 @@ function DBController (dbms) {
         returnValue = result;
         break;
       case 'PostLogin':
-        //query = `UPDATE user SET endPoint = ? WHERE email = ?`;
-        query = 'UPDATE user SET endPoint = ? WHERE userId = ?';
-        //values = [cwjy.fcmToken, cwjy.email];
+        query = `UPDATE user SET endPoint = ? WHERE email = ?`;
         values = [cwjy.fcmToken, cwjy.userId];
         dbConnector.submit(query, values);
         break;
@@ -100,13 +98,11 @@ function DBController (dbms) {
         values = [cwjy.email];
         result = await dbConnector.submitSync(query, values);
         returnValue = result;
+        break;
       case 'EmailAuth':
-        query = 'SELECT MAX(userId) as max FROM user';
-        var resultmax = dbConnector.submitSync(query, null);
-
-        query = `INSERT INTO user (userId, email, created, authStatus)
-                  VALUES ( ?, ?, CURRENT_TIMESTAMP, 'Accepted')`;
-        values = [resultmax[0].max + 1, cwjy.email];
+        query = `INSERT INTO user (email, created, authStatus)
+                  VALUES ( ?, CURRENT_TIMESTAMP, 'Accepted')`;
+        values = [cwjy.email];
         dbConnector.submit(query, values);
         break;
       case 'RegisterPhone':
