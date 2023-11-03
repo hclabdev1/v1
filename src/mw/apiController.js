@@ -252,7 +252,7 @@ function APIController(server) {
       }
       else {
         result[0].currentSoc = Math.round(result[0].bulkSoc + (result[0].meterNow - result[0].meterStart) / result[0].fullSoc * 100);
-        remaining = (result[0].fullSoc - result[0].currentSoc) / avgKW;
+        remaining = (result[0].fullSoc - (result[0].fullSoc * result[0].currentSoc / 100)) / avgKW;
         result[0].remaining = Math.floor(remaining) + ':' + Math.floor(((remaining - Math.floor(remaining)) * 60));
         result[0].estCost = Math.ceil(remaining * (result[0].priceHCL + result[0].priceHost) * result[0].avgKW);
       }
