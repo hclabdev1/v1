@@ -131,7 +131,7 @@ function DBController (dbms) {
         values = [cwjy.email];
         var user = await dbConnector.submitSync(query, values);
 
-        for( var i = 0; i < 40; i++) {
+        for( var i = 0; i < 20; i++) {
           query = `INSERT INTO bill (started, finished, chargePointId, evseSerial, evseNickname, ownerId, userId, totalkWh, cost)
                    SELECT started, finished, chargePointId, evseSerial, evseNickname, ownerId, ?, totalkWh, cost
                    FROM bill WHERE trxId = ?`;
