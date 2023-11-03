@@ -244,10 +244,10 @@ function AuthController () {
       resFrom365.on('data', (rr) => {
         var car = xmlp.parse(rr);
         console.log('car info:' + JSON.stringify(car));
-        if(car.body.vhcleWt > 0) {
+        if(car.response.body.vhcleWt > 0) {
           var cwjy = {
             action: 'CarInfo', email: req.params.email,
-            weight: car.body.vhcleWt
+            weight: car.response.body.vhcleWt
           };
           connDBServer.sendOnly(cwjy);
         } else {
@@ -259,10 +259,10 @@ function AuthController () {
         try {
           var cwjy = {
             action: 'CarInfo', email: req.params.email,
-            frwy: car.body.elctyFrwyFuelCnsmpRt,
-            dwtw: car.body.elctyDwtWFuelCnsmpRt,
-            cmpnd: car.body.elctyCmpndFuelCnsmpRt,
-            weight: car.body.vhcleWt
+            frwy: car.response.body.elctyFrwyFuelCnsmpRt,
+            dwtw: car.response.body.elctyDwtWFuelCnsmpRt,
+            cmpnd: car.response.body.elctyCmpndFuelCnsmpRt,
+            weight: car.response.body.vhcleWt
           };
           connDBServer.sendOnly(cwjy);
         } catch (e) {
