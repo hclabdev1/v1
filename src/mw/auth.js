@@ -244,6 +244,18 @@ function AuthController () {
       resFrom365.on('data', (rr) => {
         var car = xmlp.parse(rr);
         console.log('car info:' + JSON.stringify(car));
+        if(car.body.vhcleWt > 0) {
+          var cwjy = {
+            action: 'CarInfo', email: req.params.email,
+            weight: car.body.vhcleWt
+          };
+          connDBServer.sendOnly(cwjy);
+        } else {
+          console.log(new Date().toLocaleString() + ': no car information');
+        };
+        
+        /*
+
         try {
           var cwjy = {
             action: 'CarInfo', email: req.params.email,
@@ -264,6 +276,7 @@ function AuthController () {
           connDBServer.sendOnly(cwjy);
           console.log('no proper info');
         }
+        */
       });
 
     }).on('error', (err) => {

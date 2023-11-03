@@ -108,10 +108,10 @@ function DBController (dbms) {
         dbConnector.submit(query, values);
         break;
       case 'CarInfo':
-        //query = 'SELECT battery FROM spec WHERE name = ? AND weight = ?';
-        //values = [cwjy.name, cwjy.weight];
-        query = 'SELECT battery FROM spec WHERE cmpnd = ? AND frwy = ? AND dwtw = ?';
-        values = [cwjy.cmpnd, cwjy.frwy, cwjy.dwtw];
+        query = 'SELECT battery FROM spec WHERE weight = ?';
+        values = [cwjy.weight];
+        //query = 'SELECT battery FROM spec WHERE cmpnd = ? AND frwy = ? AND dwtw = ?';
+        //values = [cwjy.cmpnd, cwjy.frwy, cwjy.dwtw];
         result = await dbConnector.submitSync(query, values);
         if(result) {
           query = 'UPDATE user SET fullSoc = ? WHERE email = ?';
