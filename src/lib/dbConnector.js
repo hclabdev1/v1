@@ -23,7 +23,7 @@ function DBConnector(dbms) {
       console.debug(`${new Date().toLocaleString()} query submitted \n ${query} \n values:${values}`);
     myPool.query(query, values, (err, res) => {
       if(err) {
-        console.error('dbConnector:submit: ' + err);
+        console.error(new Date().toLocaleString() + ': dbConnector:submit: ' + err);
       }
     });
   }
@@ -38,7 +38,7 @@ function DBConnector(dbms) {
         console.debug(`${new Date().toLocaleString()} query submitted \n ${query} \n values:${values}`);
       myPool.query(query, values, (err, res) => {
         if (err) {
-          console.error('dbConnector:submitSync: ' + err);
+          console.error(new Date().toLocaleString() + ' : dbConnector:submitSync: ' + err);
           resolve(null);
           return;
         }
@@ -46,7 +46,7 @@ function DBConnector(dbms) {
         trxCount++;
         dbSpeedAvg = (dbSpeedAvg * (trxCount - 1) + end - start) / trxCount;
 
-        if(log == 'yes') 
+        //if(log == 'yes') 
           console.debug(`result: ${JSON.stringify(res)}`);
         if(res.length > 0)
           resolve(res);
