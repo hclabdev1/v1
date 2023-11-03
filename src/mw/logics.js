@@ -2,7 +2,7 @@ var constants = require('../lib/constants');
 
 function DBController (dbms) {
   const dbConnector = require('../lib/dbConnector')(dbms);
-  dbConnector.setLog('yes');
+  dbConnector.setLog('no');
   var dbSpeedAvg = 0, trxCount = 0, requestCount = 0;
 
   preProcess = (event, cwjy, callback) => {
@@ -14,6 +14,7 @@ function DBController (dbms) {
 
   // Charging Station Management System API handling
   csmsRequest = async (cwjy, callback) => {
+    console.log(new Date().toLocaleString() + ':: CSMS Req :: ' + JSON.stringify(cwjy));
     var query, values, returnValue;
     switch (cwjy.action) {
       case 'cpList':
@@ -66,6 +67,7 @@ function DBController (dbms) {
 
   // Authorization requests handling
   authRequest = async (cwjy, callback) => {
+    console.log(new Date().toLocaleString() + ':: Auth Req :: ' + JSON.stringify(cwjy));
     var returnValue, query, values, result;
     switch (cwjy.action) {
       case 'AuthStatus':
@@ -146,6 +148,7 @@ function DBController (dbms) {
   extRequest = async (cwjy, callback) => {
     requestCount++;
     var returnValue, query, result, values;
+    console.log(new Date().toLocaleString() + ':: ext Req :: ' + JSON.stringify(cwjy));
     switch (cwjy.action) {
       case 'GetSerial':         // return evseSerial with evseNickname    for App requests
         query = `SELECT evseSerial FROM evse WHERE evseNickname = ?`;
@@ -397,6 +400,10 @@ function DBController (dbms) {
       case 'StatusNotification':
         if(cwjy.pdu.errorCode == 'NoError') {
           query = `UPDATE evse SET status = ? WHERE evseSerial = ?`;
+          values = [cwjy.pdu.status, cwjy.evseSerial];
+        }
+        else if (cwjy.pdu.status == 'Available') {
+          query = `UPDATE evse SET status = ?, occupyingUserId = NULL WHERE evseSerial = ?`;
           values = [cwjy.pdu.status, cwjy.evseSerial];
         }
         else {

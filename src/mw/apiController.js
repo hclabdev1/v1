@@ -124,8 +124,8 @@ function APIController(server) {
       console.log('scan >> evse is dead.')
     }
     else {
-      response.responseCode = { type: 'error', name: 'dont know what the fuck is going on' };
-      console.log('error or special case');
+      response.responseCode = { type: 'error', name: 'evse problem' };
+      console.log(new Date().toLocaleString() + ':: error error error : ' + JSON.stringify(resultDB[0]));
     }
     res.response = response;
     next();
@@ -503,7 +503,7 @@ function APIController(server) {
         res.response = { responseCode: { type: 'page', name: 'report by month', result: returnValue } }
         break;
     }
-    console.log(returnValue);
+    //console.log(returnValue);
     next();
   }
   csmsReportUser = async (req, res, next) => {
@@ -529,7 +529,7 @@ function APIController(server) {
         res.response = { responseCode: { type: 'page', name: 'report by month', result: returnValue } }
         break;
     }
-    console.log(returnValue);
+    //console.log(returnValue);
     next();
   }
 
