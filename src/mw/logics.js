@@ -90,7 +90,7 @@ function DBController (dbms) {
         break;
       case 'PostLogin':
         query = `UPDATE user SET endPoint = ? WHERE email = ?`;
-        values = [cwjy.fcmToken, cwjy.userId];
+        values = [cwjy.fcmToken, cwjy.email];
         dbConnector.submit(query, values);
         break;
       case 'GetID':
