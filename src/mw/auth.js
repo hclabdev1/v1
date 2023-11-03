@@ -151,7 +151,7 @@ function AuthController () {
     if(result) {
       token = jwt.sign({ userId: result[0].userId }, pk, { algorithm: 'HS256' });
       var ua = uaparser(req.headers['user-agent']);
-      cwjy = { action: 'PostLogin', email: req.body.email, fcmToken: req.body.fcmToken, loggedIn: ua.ua};
+      cwjy = { action: 'PostLogin', userId: result[0].userId, email: req.body.email, fcmToken: req.body.fcmToken, loggedIn: ua.ua};
       connDBServer.sendOnly(cwjy);
       //console.debug(`${new Date().toLocaleString()} login submitted\n ${JSON.stringify(ua)}`);
     }
