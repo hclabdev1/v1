@@ -330,8 +330,8 @@ function DBController (dbms) {
         returnValue = {};
         break;
       case 'StartTransaction':
-        setTxCount();
-        cwjy.pdu.transactionId = trxCount++;
+        
+        cwjy.pdu.transactionId = setTxCount();
         /*
         query = `SELECT capacity FROM evse WHERE evseSerial = ?`;
         values = [cwjy.evseSerial];
@@ -513,6 +513,7 @@ function DBController (dbms) {
   setTxCount = async() => {
     var query = `SELECT MAX(trxId) AS max FROM bill;`;
     var result = await dbConnector.submitSync(query);
+    return result[0].max + 1;
     trxCount = result[0].max + 1;
     console.debug('setTxCount: ' + trxCount);
   }

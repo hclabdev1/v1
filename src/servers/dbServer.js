@@ -43,6 +43,6 @@ io.of('nnmServer').on('connection', (socket) => {
 server.listen(dbServer.port, ()=> {
 
   console.log(`DB server on. ${new Date(Date.now())} port: ${dbServer.port} `);
-  controller.setTxCount();
+  //controller.setTxCount();
   //mailer.init(config.mailsvr);
 });
