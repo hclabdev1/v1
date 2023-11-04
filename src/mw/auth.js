@@ -177,6 +177,9 @@ function AuthController () {
       res.json({ responseCode: { type: 'error', name: 'wrong token'}, result: [] });
       return;
     }
+
+    res.response = { responseCode: { type: 'page', name: 'welcome' }, result: decode.userId };
+    /*
     var cwjy = { action: 'GetID', email: decode.email};
     var result = await connDBServer.sendAndReceive(cwjy);
     if(result) {
@@ -187,6 +190,7 @@ function AuthController () {
       res.response = { responseCode: { type: 'error', name: 'no id' }, result: [] };
       console.log('decoded: ' + JSON.stringify(decode));
     }
+    */
     next();
 
   }
