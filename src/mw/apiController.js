@@ -459,8 +459,8 @@ function APIController(server) {
       next();
       return;
     }
-
-    var cwjy = { action: 'cpHistory', chargePointId: req.query.cp, startDate: req.query.startDate, endDate: req.query.endDate };
+    
+    var cwjy = { action: 'cpHistory', chargePointId: req.query.cp, startDate: req.query.startDate, endDate: req.query.endDate + ' 23:59:59'};
     var result = await connDBServer2.sendAndReceive(cwjy);
     res.response = { responseCode: { type: 'page', name: 'CP Charging History'}, result: result};
     next();
@@ -472,7 +472,7 @@ function APIController(server) {
       next();
       return;
     }
-    var cwjy = { action: 'EVSEHistory', evseSerial: req.query.evseSerial, startDate: req.query.startDate, endDate: req.query.endDate };
+    var cwjy = { action: 'EVSEHistory', evseSerial: req.query.evseSerial, startDate: req.query.startDate, endDate: req.query.endDate + ' 23:59:59'};
     var result = await connDBServer2.sendAndReceive(cwjy);
     res.response = { responseCode: { type: 'page', name: 'EVSE Charging History'}, result: result};
     next();
@@ -482,7 +482,7 @@ function APIController(server) {
   
   csmsReportCP = async (req, res, next) => {
 
-    var cwjy = { action: 'cpHistory', chargePointId: req.query.cp, startDate: req.query.startDate, endDate: req.query.endDate };
+    var cwjy = { action: 'cpHistory', chargePointId: req.query.cp, startDate: req.query.startDate, endDate: req.query.endDate  + ' 23:59:59'};
     var result = await connDBServer2.sendAndReceive(cwjy);
     var returnValue = [{ cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 },
                        { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 },
@@ -508,7 +508,7 @@ function APIController(server) {
   }
   csmsReportUser = async (req, res, next) => {
 
-    var cwjy = { action: 'UserHistory', user: req.query.user, startDate: req.query.startDate, endDate: req.query.endDate };
+    var cwjy = { action: 'UserHistory', user: req.query.user, startDate: req.query.startDate, endDate: req.query.endDate  + ' 23:59:59'};
     var result = await connDBServer2.sendAndReceive(cwjy);
     var returnValue = [{ cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 },
                        { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 }, { cost: 0, kWh: 0 },

@@ -1,6 +1,6 @@
 var wsClient = require('websocket').client;
 const { v1: uuidv1, } = require('uuid');
-
+var ongoingtrx;
 var client = new wsClient();
 
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
@@ -213,7 +213,8 @@ client.on('connect', (connection) => {
         sendAndLog(sending);
         break;
       case 'StartTransaction':
-        meterInterval = setInterval(metervalue, 60 * 1000, payload.transactionId, meterStart);
+        ongoingtrx = payload.transactionId;
+        meterInterval = setInterval(metervalue, 60 * 1000, ongoingtrx, meterStart);
         break;
       case 'StopTransaction':
         clearInterval(meterInterval);
