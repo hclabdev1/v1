@@ -1,9 +1,9 @@
 var constants = require('../lib/constants');
+var dbSpeedAvg = 0, trxCount =0, requestCount = 0;
 
 function DBController (dbms) {
   const dbConnector = require('../lib/dbConnector')(dbms);
-  dbConnector.setLog('no');
-  var dbSpeedAvg = 0, trxCount = 0, requestCount = 0;
+  dbConnector.setLog('no');  
 
   preProcess = (event, cwjy, callback) => {
   }
@@ -331,14 +331,10 @@ function DBController (dbms) {
         break;
       case 'StartTransaction':
         
-        setTxCount();
-        cwjy.pdu.transactionId = trxCount;
-        /*
-        query = `SELECT capacity FROM evse WHERE evseSerial = ?`;
-        values = [cwjy.evseSerial];
-        result = await dbConnector.submitSync(query, values);
-        */
-
+        query = `SELECT MAX(trxId) AS max FROM bill;`;
+        result = await dbConnector.submitSync(query);
+        cwjy.pdu.transactionId = result[0].max + 1;
+        
         query = `SELECT userId FROM user WHERE cardNumber = ?`;
         values = [cwjy.pdu.idTag];
         result = await dbConnector.submitSync(query, values);
