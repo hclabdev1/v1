@@ -330,6 +330,7 @@ function DBController (dbms) {
         returnValue = {};
         break;
       case 'StartTransaction':
+        setTxCount();
         cwjy.pdu.transactionId = trxCount++;
         /*
         query = `SELECT capacity FROM evse WHERE evseSerial = ?`;
