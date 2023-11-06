@@ -248,9 +248,10 @@ function AuthController () {
       resFrom365.on('data', (rr) => {
         var car = xmlp.parse(rr);
         console.log('car info:' + JSON.stringify(car));
-        if(car.response.body.vhcleWt > 0) {
+        if(car.response.body.vhcleWt > 0 && car.response.body.elctyCmpndFuelCnsmpRt) {
           var cwjy = {
             action: 'CarInfo', email: req.params.email,
+            cmpnd: car.response.body.elctyCmpndFuelCnsmpRt,
             weight: car.response.body.vhcleWt
           };
           connDBServer.sendOnly(cwjy);

@@ -237,12 +237,12 @@ function APIController(server) {
 
       result[0].price = Math.ceil((result[0].priceHCL + result[0].priceHost) * (result[0].meterNow - result[0].meterStart));
       avgKW = (result[0].meterNow - result[0].meterStart) / elapsed * 3600;
-      if(avgKW < 1 || avgKW > 8) {
+      //if(avgKW < 1 || avgKW > 8) {
         cwjy = { action: "GetCapa", evseSerial: result[0].evseSerial};
         capa = await connDBServer.sendAndReceive(cwjy);
         avgKW = capa[0].capacity;
-      }
-
+      //}
+      
       result[0].avgKW = Math.round(avgKW * 100) / 100;
 
       if (result[0].fullSoc == 0) {
