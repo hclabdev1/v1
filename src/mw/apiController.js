@@ -225,7 +225,7 @@ function APIController(server) {
         elapsed = Math.floor((new Date(Date.now()) - new Date(r2[0].started)) / 1000);
         result[i].elapsed = Math.floor(elapsed / 3600) + ":" + Math.floor((elapsed % 3600) / 60) + ":" + elapsed % 60;
 
-        cwjy = { action: "GetCapa", evseSerial: result[i].evseSerial};
+        cwjy = { action: "GetCapa", evseSerial: r2[0].evseSerial};
         capa = await connDBServer.sendAndReceive(cwjy);
         avgKW = capa[0].capacity;
         
